@@ -1,0 +1,24 @@
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.watermark-container {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 9999;
+    pointer-events: none;
+    display: none;
+}
+
+.watermark-container.visible {
+    display: block;
+}
+
+#watermark-image {
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+}

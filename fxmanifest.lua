@@ -1,7 +1,7 @@
 fx_version 'cerulean'
 game 'gta5'
 
-author 'Watermark Script'
+author 'Ryan Bostaph'
 description 'A configurable watermark script for FiveM'
 version '1.0.0'
 
@@ -12,6 +12,11 @@ client_scripts {
     'client.lua'
 }
 
+ui_page 'html/index.html'
+
 files {
+    'html/index.html',
+    'html/script.js',
+    'html/style.css',
     'images/*'
 }
