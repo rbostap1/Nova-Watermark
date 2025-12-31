@@ -71,15 +71,3 @@ RegisterCommand('togglewatermark', function(source, args, rawCommand)
         print('^2[Watermark] Watermark shown^7')
     end
 end, false)
-    end
-    watermarkDict = nil
-    watermarkTxn = nil
-    
-    if Config.Enabled then
-        if LoadWatermarkTexture() then
-            print('^2[Watermark] Watermark reloaded successfully^7')
-        else
-            print('^1[Watermark] Failed to reload watermark^7')
-        end
-    end
-end, false)
