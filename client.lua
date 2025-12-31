@@ -6,7 +6,10 @@ local nuiEnabled = false
 -- Initialize NUI watermark
 Citizen.CreateThread(function()
     if Config.Enabled then
-        Wait(1000) -- Wait for UI to be ready
+        Wait(2000) -- Wait for UI to be ready
+        
+        SetNuiFocus(false, false) -- Ensure NUI is not blocking input
+        SetNuiFocusKeepInput(false)
         
         SendNUIMessage({
             action = 'showWatermark',
@@ -20,6 +23,9 @@ Citizen.CreateThread(function()
         
         nuiEnabled = true
         print('^2[Watermark] Watermark loaded successfully^7')
+        print('^3[Watermark] Image: ' .. Config.Image .. '^7')
+    else
+        print('^3[Watermark] Watermark is disabled in config^7')
     end
 end)
 
