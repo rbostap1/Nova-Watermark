@@ -114,33 +114,33 @@ RegisterCommand('togglewatermark', function(source, args, rawCommand)
         end
         
         if nuiEnabled then
-        SendNUIMessage({
-            action = 'hideWatermark'
-        })
-        nuiEnabled = false
-        print('^3[Watermark] Watermark hidden^7')
-        TriggerEvent('chat:addMessage', {
-            color = {255, 165, 0},
-            multiline = true,
-            args = {"Watermark", "Watermark hidden."}
-        })
-    else
-        SendNUIMessage({
-            action = 'showWatermark',
-            image = Config.Image,
-            width = Config.Width,
-            height = Config.Height,
-            offsetX = Config.OffsetX,
-            offsetY = Config.OffsetY,
-            opacity = Config.Opacity
-        })
-        nuiEnabled = true
-        print('^2[Watermark] Watermark shown^7')
-        TriggerEvent('chat:addMessage', {
-            color = {0, 255, 0},
-            multiline = true,
-            args = {"Watermark", "Watermark shown."}
-        })
-    end
+            SendNUIMessage({
+                action = 'hideWatermark'
+            })
+            nuiEnabled = false
+            print('^3[Watermark] Watermark hidden^7')
+            TriggerEvent('chat:addMessage', {
+                color = {255, 165, 0},
+                multiline = true,
+                args = {"Watermark", "Watermark hidden."}
+            })
+        else
+            SendNUIMessage({
+                action = 'showWatermark',
+                image = Config.Image,
+                width = Config.Width,
+                height = Config.Height,
+                offsetX = Config.OffsetX,
+                offsetY = Config.OffsetY,
+                opacity = Config.Opacity
+            })
+            nuiEnabled = true
+            print('^2[Watermark] Watermark shown^7')
+            TriggerEvent('chat:addMessage', {
+                color = {0, 255, 0},
+                multiline = true,
+                args = {"Watermark", "Watermark shown."}
+            })
+        end
     end)
 end, false)
