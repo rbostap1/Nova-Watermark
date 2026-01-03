@@ -43,6 +43,10 @@ Config = {
     -- Position offsets from top-right corner (in pixels)
     OffsetX = 20,  -- Distance from right edge
     OffsetY = 20,  -- Distance from top edge
+
+    -- Command Permissions
+    UseAcePermissions = true,
+    AcePermission = 'watermark.reload',
 }
 ```
 
@@ -57,6 +61,8 @@ Config = {
 | `Height` | integer | `150` | Watermark height in pixels |
 | `OffsetX` | integer | `20` | Distance from the right edge in pixels |
 | `OffsetY` | integer | `20` | Distance from the top edge in pixels |
+| `UseAcePermissions` | boolean | `true` | Require ace permissions to use reload command |
+| `AcePermission` | string | `'watermark.reload'` | The ace permission required for the command |
 
 ## Image Requirements
 
@@ -66,6 +72,26 @@ Config = {
   - Example: If you name it `logo.png`, set `Image = 'images/logo.png'`
 
 ## Commands
+
+**Features:**
+- ✅ Shows success message in chat when watermark is refreshed
+- ❌ Shows error message in chat if something goes wrong
+- 🔒 Permission protected (configurable)
+
+**Permissions:**
+By default, this command requires the `watermark.reload` ace permission. To grant access to admins, add this to your `server.cfg`:
+
+```cfg
+add_ace group.admin watermark.reload allow
+```
+
+To allow everyone to use the command, set `UseAcePermissions = false` in `config.lua`.
+
+### Toggle Watermark
+```
+/togglewatermark
+```
+Toggles the watermark visibility on/off.
 
 ### Reload Watermark
 ```

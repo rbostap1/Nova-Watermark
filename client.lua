@@ -31,32 +31,77 @@ end)
 
 -- Reload command (useful for testing)
 RegisterCommand('reloadwatermark', function(source, args, rawCommand)
-    SendNUIMessage({
-        action = 'hideWatermark'
-    })
+    -- Check ace permissions if enabled
+    if Config.UseAcePermissions then
+        if not IsPlayerAceAllowed(PlayerId(), Config.AcePermission) then
+            TriggerEvent('chat:addMessage', {
+                color = {255, 0, 0},
+                multiline = true,
+                args = {"Watermark", "You don't have permission to use this command."}
+            })
+            return
+        end
+    end
     
-    Wait(100)
+    local success, err = pcall(function()
+        SendNUIMessage({
+            action = 'hideWatermark'
+        })
+        
+        Wait(100)
+        
+        SendNUIMessage({
+            action = 'showWatermark',
+            image = Config.Image,
+            width = Config.Width,
+            height = Config.Height,
+            offsetX = Config.OffsetX,
+            offsetY = Config.OffsetY,
+            opacity = Config.Opacity
+        })
+    end)
     
-    SendNUIMessage({
-        action = 'showWatermark',
-        image = Config.Image,
-        width = Config.Width,
-        height = Config.Height,
-        offsetX = Config.OffsetX,
-        offsetY = Config.OffsetY,
-        opacity = Config.Opacity
-    })
-    
-    print('^2[Watermark] Watermark reloaded^7')
+    if success then
+        print('^2[Watermark] Watermark reloaded^7')
+        TriggerEvent('chat:addMessage', {
+            color = {0, 255, 0},
+            multiline = true,
+            args = {"Watermark", "Watermark refreshed successfully!"}
+        })
+    else
+        print('^1[Watermark] Error reloading watermark: ' .. tostring(err) .. '^7')
+        TriggerEvent('chat:addMessage', {
+            color = {255, 0, 0},
+            multiline = true,
+            args = {"Watermark", "Error refreshing watermark. Please check console for details."}
+        })
+    end
 end, false)
 
 RegisterCommand('togglewatermark', function(source, args, rawCommand)
+    -- Check ace permissions if enabled
+    if Config.UseAcePermissions then
+        if not IsPlayerAceAllowed(PlayerId(), Config.AcePermission) then
+            TriggerEvent('chat:addMessage', {
+                color = {255, 0, 0},
+                multiline = true,
+                args = {"Watermark", "You don't have permission to use this command."}
+            })
+            return
+        end
+    end
+    
     if nuiEnabled then
         SendNUIMessage({
             action = 'hideWatermark'
         })
         nuiEnabled = false
         print('^3[Watermark] Watermark hidden^7')
+        TriggerEvent('chat:addMessage', {
+            color = {255, 165, 0},
+            multiline = true,
+            args = {"Watermark", "Watermark hidden."}
+        })
     else
         SendNUIMessage({
             action = 'showWatermark',
@@ -69,5 +114,10 @@ RegisterCommand('togglewatermark', function(source, args, rawCommand)
         })
         nuiEnabled = true
         print('^2[Watermark] Watermark shown^7')
+        TriggerEvent('chat:addMessage', {
+            color = {0, 255, 0},
+            multiline = true,
+            args = {"Watermark", "Watermark shown."}
+        })
     end
 end, false)
