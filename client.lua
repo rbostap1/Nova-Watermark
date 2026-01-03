@@ -31,27 +31,33 @@ Citizen.CreateThread(function()
 end)
 
 -- Handle permission check responses from server
-RegisterNetEvent('watermark:permissionResult', function(playerId, permission, hasPermission)
-    if permissionCallbacks[playerId] and permissionCallbacks[playerId][permission] then
-        permissionCallbacks[playerId][permission](hasPermission)
-        permissionCallbacks[playerId][permission] = nil
+RegisterNetEvent('watermark:permissionResult', function(permission, hasPermission)
+    if permissionCallbacks[permission] then
+        permissionCallbacks[permission](hasPermission)
+        permissionCallbacks[permission] = nil
     end
 end)
 
 -- Local function to check permissions
 local function CheckPermissionAndExecute(permissionName, callback)
     if not Config.UseAcePermissions then
+        print('^2[Watermark] Permission checks disabled, executing command^7')
         callback(true)
         return
     end
     
-    local playerId = GetPlayerServerId(PlayerId())
-    if not permissionCallbacks[playerId] then
-        permissionCallbacks[playerId] = {}
-    end
+    print('^3[Watermark] Checking permission: ' .. permissionName .. '^7')
+    permissionCallbacks[permissionName] = callback
+    TriggerServerEvent('watermark:checkPermission', permissionName)
     
-    permissionCallbacks[playerId][permissionName] = callback
-    TriggerServerEvent('watermark:checkPermission', playerId, permissionName)
+    -- Add timeout protection
+    SetTimeout(5000, function()
+        if permissionCallbacks[permissionName] then
+            print('^1[Watermark] Permission check timed out, denying access^7')
+            permissionCallbacks[permissionName](false)
+            permissionCallbacks[permissionName] = nil
+        end
+    end)
 end
 
 -- Reload command (useful for testing)
