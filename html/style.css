@@ -32,8 +32,7 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 10000;
-    backdrop-filter: blur(8px) saturate(120%);
-    background: rgba(10, 10, 14, 0.35);
+    pointer-events: none;
 }
 .hud-overlay.visible {
     display: flex;
@@ -46,10 +45,11 @@ body {
     width: 460px;
     max-width: 92vw;
     border-radius: 16px;
-    background: linear-gradient(135deg, rgba(20,20,28,0.75), rgba(20,20,28,0.55));
+    background: linear-gradient(135deg, rgba(20,20,28,0.95), rgba(20,20,28,0.90));
     border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: 0 12px 40px rgba(0,0,0,0.45);
     color: #e8eaf2;
+    pointer-events: all;
 }
 
 .hud-header {
