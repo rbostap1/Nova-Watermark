@@ -12,6 +12,11 @@ body {
     z-index: 9999;
     pointer-events: none;
     display: none;
+    cursor: move;
+}
+
+.watermark-container.draggable {
+    pointer-events: all;
 }
 
 .watermark-container.visible {
@@ -50,6 +55,11 @@ body {
     box-shadow: 0 12px 40px rgba(0,0,0,0.45);
     color: #e8eaf2;
     pointer-events: all;
+    position: relative;
+}
+
+.hud-header {
+    cursor: move;
 }
 
 .hud-header {
@@ -58,6 +68,8 @@ body {
     justify-content: space-between;
     padding: 14px 16px;
     border-bottom: 1px solid rgba(255,255,255,0.08);
+    cursor: move;
+    user-select: none;
 }
 .hud-title {
     font-weight: 600;

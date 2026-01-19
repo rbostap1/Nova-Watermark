@@ -134,3 +134,17 @@ RegisterNUICallback('hud:setOpacity', function(data, cb)
     end
 end)
 
+RegisterNUICallback('hud:updatePosition', function(data, cb)
+    local offsetX = tonumber(data and data.offsetX)
+    local offsetY = tonumber(data and data.offsetY)
+    
+    if offsetX and offsetY then
+        -- Update config values in real-time
+        Config.OffsetX = offsetX
+        Config.OffsetY = offsetY
+        cb({ success = true })
+    else
+        cb({ success = false })
+    end
+end)
+
