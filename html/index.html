@@ -10,6 +10,27 @@
     <div id="watermark" class="watermark-container">
         <img id="watermark-image" src="" alt="Watermark">
     </div>
+
+    <!-- HUD Overlay -->
+    <div id="hud-overlay" class="hud-overlay hidden">
+        <div class="hud-card">
+            <div class="hud-header">
+                <div class="hud-title">Watermark Controls</div>
+                <button id="hud-close" class="icon-btn" aria-label="Close">✕</button>
+            </div>
+            <div class="hud-content">
+                <div class="hud-row">
+                    <button id="toggle-btn" class="primary-btn">Toggle Logo</button>
+                    <button id="refresh-btn" class="secondary-btn">Refresh Logo</button>
+                </div>
+                <div class="hud-row">
+                    <label class="slider-label" for="opacity-slider">Opacity</label>
+                    <input id="opacity-slider" type="range" min="0" max="100" value="80" />
+                    <span id="opacity-value">0.80</span>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>

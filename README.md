@@ -9,8 +9,8 @@ A lightweight, configurable watermark script for FiveM that displays an image in
 - 🎨 Adjustable opacity (0-100%)
 - 📏 Customizable watermark size
 - 🎯 Adjustable position offsets
-- 🔄 Reload command for testing
 - ✅ Lua 5.4 compatible
+- 🧭 In-game HUD to toggle/refresh and adjust opacity (`/watermark`)
 
 ## Installation
 
@@ -44,9 +44,11 @@ Config = {
     OffsetX = 20,  -- Distance from right edge
     OffsetY = 20,  -- Distance from top edge
 
-    -- Command Permissions
-    UseAcePermissions = true,
-    AcePermission = 'watermark.reload',
+    -- Discord role-based permission for /watermark HUD
+    -- Provide one or more Discord role IDs
+    DiscordRoleIds = {
+        -- Example: '123456789012345678',
+    },
 }
 ```
 
@@ -61,8 +63,8 @@ Config = {
 | `Height` | integer | `150` | Watermark height in pixels |
 | `OffsetX` | integer | `20` | Distance from the right edge in pixels |
 | `OffsetY` | integer | `20` | Distance from the top edge in pixels |
-| `UseAcePermissions` | boolean | `true` | Require ace permissions to use reload command |
-| `AcePermission` | string | `'watermark.reload'` | The ace permission required for the command |
+| `DiscordRoleIds` | array<string> | `[]` | Allowed Discord role IDs for `/watermark` HUD |
+ 
 
 ## Image Requirements
 
@@ -71,33 +73,27 @@ Config = {
 - **Naming**: Update the `Image` config path to match your filename
   - Example: If you name it `logo.png`, set `Image = 'images/logo.png'`
 
+ 
+
 ## Commands
 
-**Features:**
-- ✅ Shows success message in chat when watermark is refreshed
-- ❌ Shows error message in chat if something goes wrong
-- 🔒 Permission protected (configurable)
+### Watermark HUD
+Open the HUD to toggle, refresh, and adjust opacity:
 
-**Permissions:**
-By default, this command requires the `watermark.reload` ace permission. To grant access to admins, add this to your `server.cfg`:
-
-```cfg
-add_ace group.admin watermark.reload allow
+```
+/watermark
 ```
 
-To allow everyone to use the command, set `UseAcePermissions = false` in `config.lua`.
+Access can be restricted to specific Discord roles.
 
-### Toggle Watermark
-```
-/togglewatermark
-```
-Toggles the watermark visibility on/off.
+### Permissions via Discord Roles
+This resource uses Badger_Discord_API for Discord role checks.
 
-### Reload Watermark
-```
-/reloadwatermark
-```
-Reloads the watermark script without restarting. Useful for testing configuration changes.
+Add your allowed role IDs to `DiscordRoleIds` in `config.lua` and ensure Badger_Discord_API is installed and started.
+
+If Badger_Discord_API is not installed or started, the command will be denied and a server log will advise installing it.
+
+For a step-by-step setup guide, see [instructions.md](instructions.md).
 
 ## File Structure
 
@@ -106,6 +102,7 @@ watermark/
 ├── fxmanifest.lua      # FiveM manifest file
 ├── config.lua          # Configuration file
 ├── client.lua          # Client-side script
+├── server.lua          # Server-side Discord role checks
 ├── images/             # Folder for watermark images
 │   └── watermark.png   # Your watermark image (add this)
 ├── README.md           # This file
@@ -119,7 +116,7 @@ watermark/
 - Check that the image file exists in the `images/` folder
 - Verify the `Image` path is correct in `config.lua`
 - Check the F8 console for error messages
-- Use `/reloadwatermark` to reload the script
+ 
 
 ### Watermark position is wrong
 - Adjust `OffsetX` and `OffsetY` values
