@@ -90,6 +90,7 @@ body {
 
 .hud-content { padding: 16px; }
 .hud-row { display: flex; gap: 10px; align-items: center; margin: 10px 0; }
+.hud-row-wrap { flex-wrap: wrap; }
 .primary-btn, .secondary-btn {
     appearance: none;
     border: none;
@@ -116,6 +117,37 @@ body {
 #reset-btn { background: linear-gradient(135deg, #f59e0b, #d97706); }
 #cancel-btn { background: #4b5563; }
 #cancel-btn:hover { background: #374151; }
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 120px;
+}
+.input-group label {
+    font-size: 12px;
+    opacity: 0.8;
+}
+.input-group input {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: #e8eaf2;
+    font-weight: 600;
+    width: 100%;
+}
+.input-group input:focus {
+    outline: 2px solid #3b82f6;
+}
+.position-readout {
+    font-size: 13px;
+    opacity: 0.85;
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+}
 
 .slider-label { margin-right: 6px; opacity: 0.9; }
 #opacity-slider {

@@ -16,6 +16,14 @@ local state = {
 -- Forward declaration for role check
 local hasDiscordRole
 
+local function notifyResult(src, action, ok, message)
+	TriggerClientEvent('watermark:actionResult', src, {
+		action = action,
+		success = ok and true or false,
+		message = message
+	})
+end
+
 local function clamp(value, min, max)
 	if type(value) ~= 'number' then return nil end
 	if value < min then return min end
@@ -115,6 +123,7 @@ end)
 -- Initial state sync for newly connecting clients
 RegisterNetEvent('watermark:requestState', function()
 	sendState(source)
+	notifyResult(source, 'sync', true, 'Watermark state synced from server.')
 end)
 
 -- Server-wide opacity update
@@ -123,14 +132,19 @@ RegisterNetEvent('watermark:setOpacity', function(opacity)
 
 	if not isAuthorized(src) then
 		print('^1[Watermark-Server] Unauthorized opacity update attempt from ' .. tostring(src) .. '^7')
+		notifyResult(src, 'setOpacity', false, 'Not authorized to change opacity.')
 		return
 	end
 
 	local value = clamp(tonumber(opacity), 0.0, 1.0)
-	if not value then return end
+	if not value then
+		notifyResult(src, 'setOpacity', false, 'Invalid opacity value.')
+		return
+	end
 
 	state.opacity = value
 	sendState()
+	notifyResult(src, 'setOpacity', true, ('Opacity set to %.2f server-wide.'):format(value))
 end)
 
 -- Server-wide position update
@@ -139,16 +153,21 @@ RegisterNetEvent('watermark:setPosition', function(offsetX, offsetY)
 
 	if not isAuthorized(src) then
 		print('^1[Watermark-Server] Unauthorized position update attempt from ' .. tostring(src) .. '^7')
+		notifyResult(src, 'setPosition', false, 'Not authorized to change position.')
 		return
 	end
 
 	local x = clamp(tonumber(offsetX), 0, 10000)
 	local y = clamp(tonumber(offsetY), 0, 10000)
-	if not x or not y then return end
+	if not x or not y then
+		notifyResult(src, 'setPosition', false, 'Invalid position values.')
+		return
+	end
 
 	state.offsetX = x
 	state.offsetY = y
 	sendState()
+	notifyResult(src, 'setPosition', true, ('Position set to X:%d Y:%d server-wide.'):format(x, y))
 end)
 
 -- Server-wide enabled toggle
@@ -157,6 +176,7 @@ RegisterNetEvent('watermark:setEnabled', function(payload)
 
 	if not isAuthorized(src) then
 		print('^1[Watermark-Server] Unauthorized visibility toggle attempt from ' .. tostring(src) .. '^7')
+		notifyResult(src, 'setEnabled', false, 'Not authorized to toggle watermark.')
 		return
 	end
 
@@ -174,6 +194,7 @@ RegisterNetEvent('watermark:setEnabled', function(payload)
 	end
 
 	sendState()
+	notifyResult(src, 'setEnabled', true, state.enabled and 'Watermark shown server-wide.' or 'Watermark hidden server-wide.')
 end)
 
 -- Save current state (re-broadcast to ensure everyone is in sync)
@@ -182,6 +203,7 @@ RegisterNetEvent('watermark:saveState', function(payload)
 
 	if not isAuthorized(src) then
 		print('^1[Watermark-Server] Unauthorized save attempt from ' .. tostring(src) .. '^7')
+		notifyResult(src, 'saveState', false, 'Not authorized to save state.')
 		return
 	end
 
@@ -196,6 +218,7 @@ RegisterNetEvent('watermark:saveState', function(payload)
 	end
 
 	sendState()
+	notifyResult(src, 'saveState', true, 'Watermark state saved and broadcast server-wide.')
 end)
 
 -- Reset to configured defaults
@@ -204,6 +227,7 @@ RegisterNetEvent('watermark:resetState', function()
 
 	if not isAuthorized(src) then
 		print('^1[Watermark-Server] Unauthorized reset attempt from ' .. tostring(src) .. '^7')
+		notifyResult(src, 'resetState', false, 'Not authorized to reset state.')
 		return
 	end
 
@@ -216,4 +240,5 @@ RegisterNetEvent('watermark:resetState', function()
 	state.height = Config.Height
 
 	sendState()
+	notifyResult(src, 'resetState', true, 'Watermark reset to config defaults server-wide.')
 end)

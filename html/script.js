@@ -30,6 +30,8 @@ window.addEventListener('message', function(event) {
     const toggleBtn = document.getElementById('toggle-btn');
     const positionDisplay = document.getElementById('position-display');
     const localToggleBtn = document.getElementById('local-toggle-btn');
+    const posXInput = document.getElementById('pos-x-input');
+    const posYInput = document.getElementById('pos-y-input');
 
     console.log('[Watermark] Received message:', data);
 
@@ -85,6 +87,8 @@ window.addEventListener('message', function(event) {
         if (positionDisplay) {
             positionDisplay.textContent = `X: ${currentOffsetX}, Y: ${currentOffsetY}`;
         }
+        if (posXInput) posXInput.value = currentOffsetX;
+        if (posYInput) posYInput.value = currentOffsetY;
         
     } else if (data.action === 'closeHUD') {
         overlay.classList.add('hidden');
@@ -109,6 +113,8 @@ function applyHudState(state) {
     const toggleBtn = document.getElementById('toggle-btn');
     const localToggleBtn = document.getElementById('local-toggle-btn');
     const positionDisplay = document.getElementById('position-display');
+    const posXInput = document.getElementById('pos-x-input');
+    const posYInput = document.getElementById('pos-y-input');
 
     hudState.enabled = typeof state.enabled === 'boolean' ? state.enabled : hudState.enabled;
     hudState.opacity = typeof state.opacity === 'number' ? state.opacity : hudState.opacity;
@@ -140,6 +146,12 @@ function applyHudState(state) {
         const x = typeof hudState.offsetX === 'number' ? hudState.offsetX : 0;
         const y = typeof hudState.offsetY === 'number' ? hudState.offsetY : 0;
         positionDisplay.textContent = `X: ${Math.round(x)}, Y: ${Math.round(y)}`;
+    }
+    if (posXInput) {
+        posXInput.value = Math.round(typeof hudState.offsetX === 'number' ? hudState.offsetX : 0);
+    }
+    if (posYInput) {
+        posYInput.value = Math.round(typeof hudState.offsetY === 'number' ? hudState.offsetY : 0);
     }
 }
 
@@ -243,6 +255,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetBtn = document.getElementById('reset-btn');
     const localToggleBtn = document.getElementById('local-toggle-btn');
     const cancelBtn = document.getElementById('cancel-btn');
+    const posXInput = document.getElementById('pos-x-input');
+    const posYInput = document.getElementById('pos-y-input');
+    const posApplyBtn = document.getElementById('pos-apply-btn');
 
     makeDraggable();
 
@@ -279,6 +294,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (resetBtn) {
         resetBtn.addEventListener('click', () => {
             postNUI('hud:resetDefaults', {});
+        });
+    }
+    if (posApplyBtn) {
+        posApplyBtn.addEventListener('click', () => {
+            const xVal = parseInt(posXInput && posXInput.value, 10);
+            const yVal = parseInt(posYInput && posYInput.value, 10);
+            if (Number.isFinite(xVal) && Number.isFinite(yVal)) {
+                currentOffsetX = Math.max(0, Math.min(10000, xVal));
+                currentOffsetY = Math.max(0, Math.min(10000, yVal));
+                postNUI('hud:updatePosition', { offsetX: currentOffsetX, offsetY: currentOffsetY });
+            } else {
+                postNUI('hud:updatePosition', {});
+            }
         });
     }
     if (closeBtn) {

@@ -103,6 +103,7 @@ RegisterNUICallback('hud:toggle', function(_, cb)
     serverState.enabled = newState
     nuiEnabled = newState
     TriggerServerEvent('watermark:setEnabled', { enabled = newState })
+    TriggerEvent('chat:addMessage', { color = {255,255,255}, multiline = true, args = {'Watermark', 'Toggling watermark server-wide...'} })
     cb({ enabled = newState })
 end)
 
@@ -148,6 +149,7 @@ RegisterNUICallback('hud:setOpacity', function(data, cb)
         serverState.opacity = currentOpacity
         TriggerServerEvent('watermark:setOpacity', currentOpacity)
         SendNUIMessage({ action = 'updateOpacity', opacity = currentOpacity })
+        TriggerEvent('chat:addMessage', { color = {255,255,255}, multiline = true, args = {'Watermark', ('Setting opacity to %.2f server-wide...'):format(currentOpacity)} })
         cb({ success = true, opacity = currentOpacity })
     else
         cb({ success = false })
@@ -162,8 +164,10 @@ RegisterNUICallback('hud:updatePosition', function(data, cb)
         serverState.offsetX = offsetX
         serverState.offsetY = offsetY
         TriggerServerEvent('watermark:setPosition', offsetX, offsetY)
+        TriggerEvent('chat:addMessage', { color = {255,255,255}, multiline = true, args = {'Watermark', ('Updating position to X:%d Y:%d server-wide...'):format(offsetX, offsetY)} })
         cb({ success = true })
     else
+        TriggerEvent('chat:addMessage', { color = {255,0,0}, multiline = true, args = {'Watermark', 'Invalid position values.'} })
         cb({ success = false })
     end
 end)
@@ -174,16 +178,19 @@ RegisterNUICallback('hud:saveState', function(_, cb)
         offsetX = serverState.offsetX,
         offsetY = serverState.offsetY
     })
+    TriggerEvent('chat:addMessage', { color = {255,255,255}, multiline = true, args = {'Watermark', 'Saving watermark state server-wide...'} })
     cb({ success = true })
 end)
 
 RegisterNUICallback('hud:resetDefaults', function(_, cb)
     TriggerServerEvent('watermark:resetState')
+    TriggerEvent('chat:addMessage', { color = {255,255,255}, multiline = true, args = {'Watermark', 'Resetting to config defaults server-wide...'} })
     cb({ success = true })
 end)
 
 RegisterNUICallback('hud:syncState', function(_, cb)
     TriggerServerEvent('watermark:requestState')
+    TriggerEvent('chat:addMessage', { color = {255,255,255}, multiline = true, args = {'Watermark', 'Syncing watermark state from server...'} })
     cb({ success = true })
 end)
 
@@ -212,5 +219,14 @@ RegisterNetEvent('watermark:stateSync', function(newState)
             localHidden = localHidden
         }
     })
+end)
+
+-- Action results from server (success/error)
+RegisterNetEvent('watermark:actionResult', function(data)
+    if type(data) ~= 'table' then return end
+    local msg = data.message or 'Action complete.'
+    local ok = data.success
+    local color = ok and {0,255,0} or {255,0,0}
+    TriggerEvent('chat:addMessage', { color = color, multiline = true, args = {'Watermark', msg} })
 end)
 
