@@ -6,10 +6,19 @@ This guide explains how to use the in-game Watermark HUD and how to lock access 
 
 - Command: `/watermark`
 - HUD Controls:
-  - Toggle Logo: Show/Hide the watermark
+- HUD Controls:
+  - Hide/Show Logo: Server-wide visibility toggle
+  - Hide/Show (Client Only): Affects only your view
   - Refresh Logo: Reload the watermark image and settings
-  - Opacity: Adjust transparency live (0.0–1.0)
+  - Opacity: Adjust transparency live (0.0–1.0), server-wide
+  - Drag watermark: Move it; new position is server-wide
+  - Save: Broadcast current opacity/position/visibility to everyone
+  - Reset Defaults: Restore config defaults server-wide
+  - Cancel or ✕: Close HUD without saving
 - Access Control: Only players with allowed Discord roles can open the HUD
+- Server sync: visibility, opacity, and position changes are server-wide and apply instantly to all clients. The client-only hide toggle affects only the local player.
+- Save broadcasts the current in-memory state; it does not write back to `config.lua`.
+- Only HUD access is gated; watermark display on join still follows `Config.Enabled`.
 
 ## Prerequisites
 

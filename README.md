@@ -1,6 +1,6 @@
 # FiveM Watermark Script
 
-A lightweight, configurable watermark script for FiveM that displays an image in the top-right corner of the screen with customizable opacity, size, and position.
+A lightweight, configurable watermark script for FiveM that displays an image in the top-right corner of the screen with customizable opacity, size, and position. Now includes server-wide state sync plus a client-only hide option.
 
 ## Features
 
@@ -8,9 +8,12 @@ A lightweight, configurable watermark script for FiveM that displays an image in
 - ⚙️ Fully configurable via `config.lua`
 - 🎨 Adjustable opacity (0-100%)
 - 📏 Customizable watermark size
-- 🎯 Adjustable position offsets
+- 🎯 Adjustable position offsets (drag in HUD)
+- 🔄 Server-wide sync for visibility, opacity, and position (changes are instant for everyone)
+- 🙈 Client-only hide toggle (affects just your view)
+- 💾 Save + reset-to-defaults buttons; Cancel/X just close the HUD without saving
 - ✅ Lua 5.4 compatible
-- 🧭 In-game HUD to toggle/refresh and adjust opacity (`/watermark`)
+- 🧭 In-game HUD to toggle/refresh, adjust opacity, move the watermark (`/watermark`)
 
 ## Installation
 
@@ -78,13 +81,21 @@ Config = {
 ## Commands
 
 ### Watermark HUD
-Open the HUD to toggle, refresh, and adjust opacity:
+Open the HUD to toggle, refresh, adjust opacity, and move the watermark:
 
 ```
 /watermark
 ```
 
 Access can be restricted to specific Discord roles.
+
+**HUD controls**
+- Hide/Show Logo (server-wide)
+- Hide/Show (client only)
+- Refresh Logo
+- Opacity slider (live)
+- Drag watermark to move (sends new server-wide position)
+- Save (broadcasts current state), Reset Defaults (applies config defaults), Cancel/X (close only)
 
 ### Permissions via Discord Roles
 This resource uses Badger_Discord_API for Discord role checks.
