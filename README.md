@@ -93,6 +93,7 @@ Access can be restricted to specific Discord roles.
 - Hide/Show Logo (server-wide)
 - Hide/Show (client only)
 - Refresh Logo
+- Sync (pull latest server state)
 - Opacity slider (live)
 - Drag watermark to move (sends new server-wide position)
 - Save (broadcasts current state), Reset Defaults (applies config defaults), Cancel/X (close only)

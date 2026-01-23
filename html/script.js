@@ -237,6 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const opacitySlider = document.getElementById('opacity-slider');
     const toggleBtn = document.getElementById('toggle-btn');
     const refreshBtn = document.getElementById('refresh-btn');
+    const syncBtn = document.getElementById('sync-btn');
     const closeBtn = document.getElementById('hud-close');
     const saveBtn = document.getElementById('save-btn');
     const resetBtn = document.getElementById('reset-btn');
@@ -253,6 +254,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (refreshBtn) {
         refreshBtn.addEventListener('click', () => {
             postNUI('hud:refresh', {});
+        });
+    }
+    if (syncBtn) {
+        syncBtn.addEventListener('click', () => {
+            postNUI('hud:syncState', {});
         });
     }
       if (cancelBtn) {

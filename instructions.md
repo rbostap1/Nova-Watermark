@@ -10,6 +10,7 @@ This guide explains how to use the in-game Watermark HUD and how to lock access 
   - Hide/Show Logo: Server-wide visibility toggle
   - Hide/Show (Client Only): Affects only your view
   - Refresh Logo: Reload the watermark image and settings
+  - Sync: Pull latest server state
   - Opacity: Adjust transparency live (0.0–1.0), server-wide
   - Drag watermark: Move it; new position is server-wide
   - Save: Broadcast current opacity/position/visibility to everyone

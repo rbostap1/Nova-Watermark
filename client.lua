@@ -182,6 +182,11 @@ RegisterNUICallback('hud:resetDefaults', function(_, cb)
     cb({ success = true })
 end)
 
+RegisterNUICallback('hud:syncState', function(_, cb)
+    TriggerServerEvent('watermark:requestState')
+    cb({ success = true })
+end)
+
 -- State sync from server (initial + updates)
 RegisterNetEvent('watermark:stateSync', function(newState)
     if type(newState) == 'table' then

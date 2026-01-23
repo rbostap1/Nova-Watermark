@@ -107,6 +107,16 @@ body {
 .secondary-btn { background: rgba(255,255,255,0.12); color: #fff; }
 .secondary-btn:hover { background: rgba(255,255,255,0.22); }
 
+/* Button color accents */
+#toggle-btn { background: linear-gradient(135deg, #2563eb, #0ea5e9); }
+#refresh-btn { background: linear-gradient(135deg, #6366f1, #a855f7); }
+#sync-btn { background: linear-gradient(135deg, #0ea5e9, #22d3ee); }
+#local-toggle-btn { background: linear-gradient(135deg, #f97316, #fb923c); }
+#save-btn { background: linear-gradient(135deg, #22c55e, #16a34a); }
+#reset-btn { background: linear-gradient(135deg, #f59e0b, #d97706); }
+#cancel-btn { background: #4b5563; }
+#cancel-btn:hover { background: #374151; }
+
 .slider-label { margin-right: 6px; opacity: 0.9; }
 #opacity-slider {
     -webkit-appearance: none;

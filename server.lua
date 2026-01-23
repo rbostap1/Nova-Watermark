@@ -44,6 +44,9 @@ end
 local function isAuthorized(src)
 	if src == 0 then return true end -- allow console
 	local allowedRoles = Config.DiscordRoleIds or {}
+	if #allowedRoles == 0 then
+		return true -- no roles configured means allow all
+	end
 	return hasDiscordRole(src, allowedRoles)
 end
 
@@ -93,7 +96,11 @@ RegisterNetEvent('watermark:checkDiscordAccess', function()
 	local allowed = false
 
 	local allowedRoles = Config.DiscordRoleIds or {}
-	allowed = hasDiscordRole(src, allowedRoles)
+	if #allowedRoles == 0 then
+		allowed = true
+	else
+		allowed = hasDiscordRole(src, allowedRoles)
+	end
 
 	if not allowed then
 		-- If provider not available or role missing, log a helpful message
