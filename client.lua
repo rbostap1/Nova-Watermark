@@ -4,43 +4,37 @@
 local nuiEnabled = false
 local hudOpen = false
 local currentOpacity = Config.Opacity
+local localHidden = false
+local serverState = {
+    enabled = Config.Enabled,
+    opacity = Config.Opacity,
+    offsetX = Config.OffsetX,
+    offsetY = Config.OffsetY,
+    image = Config.Image,
+    width = Config.Width,
+    height = Config.Height
+}
 
 -- Initialize NUI watermark
 Citizen.CreateThread(function()
-    if Config.Enabled then
-        Wait(2000) -- Wait for UI to be ready
-        
-        SetNuiFocus(false, false) -- Ensure NUI is not blocking input
-        SetNuiFocusKeepInput(false)
-        
-        SendNUIMessage({
-            action = 'showWatermark',
-            image = Config.Image,
-            width = Config.Width,
-            height = Config.Height,
-            offsetX = Config.OffsetX,
-            offsetY = Config.OffsetY,
-            opacity = currentOpacity
-        })
-        
-        nuiEnabled = true
-        print('^2[Watermark] Watermark loaded successfully^7')
-        print('^3[Watermark] Image: ' .. Config.Image .. '^7')
-    else
-        print('^3[Watermark] Watermark is disabled in config^7')
-    end
+    Wait(500)
+    TriggerServerEvent('watermark:requestState')
 end)
 
 -- Helper functions to manage watermark
 local function ShowWatermark()
+    local state = serverState or {}
+
+    currentOpacity = state.opacity or currentOpacity
+
     SendNUIMessage({
         action = 'showWatermark',
-        image = Config.Image,
-        width = Config.Width,
-        height = Config.Height,
-        offsetX = Config.OffsetX,
-        offsetY = Config.OffsetY,
-        opacity = currentOpacity
+        image = state.image or Config.Image,
+        width = state.width or Config.Width,
+        height = state.height or Config.Height,
+        offsetX = state.offsetX or Config.OffsetX,
+        offsetY = state.offsetY or Config.OffsetY,
+        opacity = state.opacity or currentOpacity
     })
     nuiEnabled = true
 end
@@ -50,6 +44,14 @@ local function HideWatermark()
     nuiEnabled = false
 end
 
+local function ApplyVisibility()
+    if serverState.enabled and not localHidden then
+        ShowWatermark()
+    else
+        HideWatermark()
+    end
+end
+
 local function OpenHUD()
     SetNuiFocus(true, true)
     SetNuiFocusKeepInput(false)
@@ -57,8 +59,11 @@ local function OpenHUD()
     SendNUIMessage({
         action = 'openHUD',
         state = {
-            enabled = nuiEnabled,
-            opacity = currentOpacity
+            enabled = serverState.enabled,
+            opacity = serverState.opacity,
+            offsetX = serverState.offsetX,
+            offsetY = serverState.offsetY,
+            localHidden = localHidden
         }
     })
 end
@@ -94,21 +99,34 @@ RegisterNUICallback('hud:close', function(_, cb)
 end)
 
 RegisterNUICallback('hud:toggle', function(_, cb)
-    if nuiEnabled then
-        HideWatermark()
-        TriggerEvent('chat:addMessage', { color = {255,165,0}, multiline = true, args = {"Watermark", "Watermark hidden."} })
-    else
-        ShowWatermark()
-        TriggerEvent('chat:addMessage', { color = {0,255,0}, multiline = true, args = {"Watermark", "Watermark shown."} })
-    end
-    cb({ enabled = nuiEnabled })
+    local newState = not serverState.enabled
+    serverState.enabled = newState
+    nuiEnabled = newState
+    TriggerServerEvent('watermark:setEnabled', { enabled = newState })
+    cb({ enabled = newState })
+end)
+
+RegisterNUICallback('hud:toggleLocal', function(_, cb)
+    localHidden = not localHidden
+    ApplyVisibility()
+    SendNUIMessage({
+        action = 'syncState',
+        state = {
+            enabled = serverState.enabled,
+            opacity = serverState.opacity,
+            offsetX = serverState.offsetX,
+            offsetY = serverState.offsetY,
+            localHidden = localHidden
+        }
+    })
+    cb({ hidden = localHidden })
 end)
 
 RegisterNUICallback('hud:refresh', function(_, cb)
     local success, err = pcall(function()
         HideWatermark()
         Wait(100)
-        ShowWatermark()
+        ApplyVisibility()
     end)
     if success then
         TriggerEvent('chat:addMessage', { color = {0,255,0}, multiline = true, args = {"Watermark", "Watermark refreshed."} })
@@ -127,6 +145,8 @@ RegisterNUICallback('hud:setOpacity', function(data, cb)
         if value < 0.0 then value = 0.0 end
         if value > 1.0 then value = 1.0 end
         currentOpacity = value
+        serverState.opacity = currentOpacity
+        TriggerServerEvent('watermark:setOpacity', currentOpacity)
         SendNUIMessage({ action = 'updateOpacity', opacity = currentOpacity })
         cb({ success = true, opacity = currentOpacity })
     else
@@ -139,12 +159,53 @@ RegisterNUICallback('hud:updatePosition', function(data, cb)
     local offsetY = tonumber(data and data.offsetY)
     
     if offsetX and offsetY then
-        -- Update config values in real-time
-        Config.OffsetX = offsetX
-        Config.OffsetY = offsetY
+        serverState.offsetX = offsetX
+        serverState.offsetY = offsetY
+        TriggerServerEvent('watermark:setPosition', offsetX, offsetY)
         cb({ success = true })
     else
         cb({ success = false })
     end
+end)
+
+RegisterNUICallback('hud:saveState', function(_, cb)
+    TriggerServerEvent('watermark:saveState', {
+        opacity = serverState.opacity,
+        offsetX = serverState.offsetX,
+        offsetY = serverState.offsetY
+    })
+    cb({ success = true })
+end)
+
+RegisterNUICallback('hud:resetDefaults', function(_, cb)
+    TriggerServerEvent('watermark:resetState')
+    cb({ success = true })
+end)
+
+-- State sync from server (initial + updates)
+RegisterNetEvent('watermark:stateSync', function(newState)
+    if type(newState) == 'table' then
+        serverState.enabled = newState.enabled
+        serverState.opacity = newState.opacity or serverState.opacity
+        serverState.offsetX = newState.offsetX or serverState.offsetX
+        serverState.offsetY = newState.offsetY or serverState.offsetY
+        serverState.image = newState.image or serverState.image
+        serverState.width = newState.width or serverState.width
+        serverState.height = newState.height or serverState.height
+        currentOpacity = serverState.opacity or currentOpacity
+    end
+
+    ApplyVisibility()
+
+    SendNUIMessage({
+        action = 'syncState',
+        state = {
+            enabled = serverState.enabled,
+            opacity = serverState.opacity,
+            offsetX = serverState.offsetX,
+            offsetY = serverState.offsetY,
+            localHidden = localHidden
+        }
+    })
 end)
 

@@ -12,6 +12,13 @@ let dragStartX = 0;
 let dragStartY = 0;
 let elementStartX = 0;
 let elementStartY = 0;
+let hudState = {
+    enabled: true,
+    opacity: 0.8,
+    offsetX: 20,
+    offsetY: 20,
+    localHidden: false
+};
 
 window.addEventListener('message', function(event) {
     const data = event.data;
@@ -22,6 +29,7 @@ window.addEventListener('message', function(event) {
     const opacityValue = document.getElementById('opacity-value');
     const toggleBtn = document.getElementById('toggle-btn');
     const positionDisplay = document.getElementById('position-display');
+    const localToggleBtn = document.getElementById('local-toggle-btn');
 
     console.log('[Watermark] Received message:', data);
 
@@ -68,9 +76,7 @@ window.addEventListener('message', function(event) {
         const state = data.state || { enabled: true, opacity: 0.8 };
         overlay.classList.remove('hidden');
         overlay.classList.add('visible');
-        opacitySlider.value = Math.round((state.opacity || 0.8) * 100);
-        opacityValue.textContent = (opacitySlider.value / 100).toFixed(2);
-        toggleBtn.textContent = state.enabled ? 'Hide Logo' : 'Show Logo';
+        applyHudState(state);
         
         // Enable watermark dragging
         watermark.classList.add('draggable');
@@ -92,8 +98,50 @@ window.addEventListener('message', function(event) {
         watermarkImage.style.opacity = opacity;
         opacitySlider.value = Math.round(opacity * 100);
         opacityValue.textContent = opacity.toFixed(2);
+    } else if (data.action === 'syncState') {
+        applyHudState(data.state || {});
     }
 });
+
+function applyHudState(state) {
+    const opacitySlider = document.getElementById('opacity-slider');
+    const opacityValue = document.getElementById('opacity-value');
+    const toggleBtn = document.getElementById('toggle-btn');
+    const localToggleBtn = document.getElementById('local-toggle-btn');
+    const positionDisplay = document.getElementById('position-display');
+
+    hudState.enabled = typeof state.enabled === 'boolean' ? state.enabled : hudState.enabled;
+    hudState.opacity = typeof state.opacity === 'number' ? state.opacity : hudState.opacity;
+    hudState.offsetX = typeof state.offsetX === 'number' ? state.offsetX : hudState.offsetX;
+    hudState.offsetY = typeof state.offsetY === 'number' ? state.offsetY : hudState.offsetY;
+    hudState.localHidden = typeof state.localHidden === 'boolean' ? state.localHidden : hudState.localHidden;
+
+    if (typeof hudState.offsetX === 'number') {
+        currentOffsetX = hudState.offsetX;
+    }
+    if (typeof hudState.offsetY === 'number') {
+        currentOffsetY = hudState.offsetY;
+    }
+
+    if (opacitySlider) {
+        opacitySlider.value = Math.round((hudState.opacity || 0.8) * 100);
+    }
+    if (opacityValue) {
+        const value = opacitySlider ? opacitySlider.value : Math.round((hudState.opacity || 0.8) * 100);
+        opacityValue.textContent = (value / 100).toFixed(2);
+    }
+    if (toggleBtn) {
+        toggleBtn.textContent = hudState.enabled ? 'Hide Logo (Server Wide)' : 'Show Logo (Server Wide)';
+    }
+    if (localToggleBtn) {
+        localToggleBtn.textContent = hudState.localHidden ? 'Show (Client Only)' : 'Hide (Client Only)';
+    }
+    if (positionDisplay) {
+        const x = typeof hudState.offsetX === 'number' ? hudState.offsetX : 0;
+        const y = typeof hudState.offsetY === 'number' ? hudState.offsetY : 0;
+        positionDisplay.textContent = `X: ${Math.round(x)}, Y: ${Math.round(y)}`;
+    }
+}
 
 // HUD interactions → NUI callbacks
 function postNUI(name, payload) {
@@ -190,6 +238,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleBtn = document.getElementById('toggle-btn');
     const refreshBtn = document.getElementById('refresh-btn');
     const closeBtn = document.getElementById('hud-close');
+    const saveBtn = document.getElementById('save-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const localToggleBtn = document.getElementById('local-toggle-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
 
     makeDraggable();
 
@@ -201,6 +253,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (refreshBtn) {
         refreshBtn.addEventListener('click', () => {
             postNUI('hud:refresh', {});
+        });
+    }
+      if (cancelBtn) {
+          cancelBtn.addEventListener('click', () => {
+              postNUI('hud:close', {});
+          });
+      }
+      if (localToggleBtn) {
+          localToggleBtn.addEventListener('click', () => {
+              postNUI('hud:toggleLocal', {});
+          });
+      }
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            postNUI('hud:saveState', {});
+        });
+    }
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            postNUI('hud:resetDefaults', {});
         });
     }
     if (closeBtn) {
