@@ -22,4 +22,11 @@ Config = {
     -- Positive values move left and down
     OffsetX = 20,  -- Distance from right edge
     OffsetY = 20,  -- Distance from top edge
+    
+    -- Discord role-based permission for /watermark HUD
+    -- Provide one or more Discord role IDs
+    DiscordRoleIds = {
+        -- Example: '123456789012345678',
+    },
 }
+
