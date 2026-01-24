@@ -1,8 +1,5 @@
 -- Watermark Client Script for FiveM
--- Displays a configurable watermark image using NUI
--- Updated with redesigned HUD and improved state management
 
--- ==================== Local State ====================
 local nuiEnabled = false
 local hudOpen = false
 local currentOpacity = Config.Opacity
@@ -37,7 +34,6 @@ Citizen.CreateThread(function()
     TriggerServerEvent('watermark:requestState')
 end)
 
--- ==================== Watermark Display Management ====================
 local function ShowWatermark()
     local state = serverState or {}
     currentOpacity = state.opacity or currentOpacity
@@ -73,7 +69,6 @@ local function OpenHUD()
     SetNuiFocus(true, true)
     SetNuiFocusKeepInput(false)
     hudOpen = true
-    log('info', 'Opening HUD control center')
     SendNUIMessage({
         action = 'openHUD',
         state = {
@@ -90,17 +85,14 @@ local function CloseHUD()
     SetNuiFocus(false, false)
     SetNuiFocusKeepInput(false)
     hudOpen = false
-    log('info', 'Closing HUD control center')
     SendNUIMessage({ action = 'closeHUD' })
 end
 
--- ==================== Commands ====================
 RegisterCommand('watermark', function()
     log('info', 'Player requested watermark HUD access')
     TriggerServerEvent('watermark:checkDiscordAccess')
 end, false)
 
--- ==================== Server Events ====================
 RegisterNetEvent('watermark:discordPermResult', function(allowed)
     if allowed then
         log('success', 'Player has permission to access HUD')
@@ -156,12 +148,6 @@ RegisterNetEvent('watermark:actionResult', function(data)
     TriggerEvent('chat:addMessage', { color = color, multiline = true, args = {'Watermark', msg} })
 end)
 
--- ==================== NUI Callbacks ====================
-RegisterNUICallback('hud:close', function(_, cb)
-    CloseHUD()
-    cb({ success = true })
-end)
-
 RegisterNUICallback('hud:toggle', function(_, cb)
     local newState = not serverState.enabled
     serverState.enabled = newState
@@ -215,7 +201,6 @@ RegisterNUICallback('hud:setOpacity', function(data, cb)
         log('info', 'Opacity adjusted to ' .. string.format('%.2f', currentOpacity))
         TriggerServerEvent('watermark:setOpacity', currentOpacity)
         SendNUIMessage({ action = 'updateOpacity', opacity = currentOpacity })
-        TriggerEvent('chat:addMessage', { color = {255, 255, 255}, multiline = true, args = {'Watermark', ('Opacity set to %.0f%%...'):format(currentOpacity * 100)} })
         cb({ success = true, opacity = currentOpacity })
     else
         log('error', 'Invalid opacity value provided')
@@ -239,17 +224,6 @@ RegisterNUICallback('hud:updatePosition', function(data, cb)
         TriggerEvent('chat:addMessage', { color = {255, 0, 0}, multiline = true, args = {'Watermark', 'Invalid position values.'} })
         cb({ success = false })
     end
-end)
-
-RegisterNUICallback('hud:saveState', function(_, cb)
-    log('info', 'Saving watermark state to config file')
-    TriggerServerEvent('watermark:saveState', {
-        opacity = serverState.opacity,
-        offsetX = serverState.offsetX,
-        offsetY = serverState.offsetY
-    })
-    TriggerEvent('chat:addMessage', { color = {255, 255, 255}, multiline = true, args = {'Watermark', 'Saving configuration to file...'} })
-    cb({ success = true })
 end)
 
 RegisterNUICallback('hud:resetDefaults', function(_, cb)

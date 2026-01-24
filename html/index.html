@@ -7,15 +7,12 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Watermark Display -->
     <div id="watermark" class="watermark-container">
         <img id="watermark-image" src="" alt="Watermark">
     </div>
 
-    <!-- Modern HUD Overlay -->
     <div id="hud-overlay" class="hud-overlay hidden">
         <div class="hud-container">
-            <!-- Header Section -->
             <div class="hud-header">
                 <div class="header-content">
                     <div class="header-icon">⚙️</div>
@@ -27,16 +24,13 @@
                 <button id="hud-close" class="close-btn" aria-label="Close">✕</button>
             </div>
 
-            <!-- Main Content -->
             <div class="hud-content">
-                <!-- Settings Tabs -->
                 <div class="tabs">
                     <button class="tab-btn active" data-tab="visibility">Visibility</button>
                     <button class="tab-btn" data-tab="position">Position</button>
                     <button class="tab-btn" data-tab="advanced">Advanced</button>
                 </div>
 
-                <!-- Visibility Tab -->
                 <div id="visibility-tab" class="tab-content active">
                     <div class="setting-group">
                         <div class="setting-header">
@@ -75,7 +69,6 @@
                     </div>
                 </div>
 
-                <!-- Position Tab -->
                 <div id="position-tab" class="tab-content">
                     <div class="setting-group">
                         <div class="setting-header">
@@ -116,22 +109,21 @@
                     </div>
                 </div>
 
-                <!-- Advanced Tab -->
                 <div id="advanced-tab" class="tab-content">
                     <div class="setting-group">
                         <div class="setting-header">
                             <label class="setting-label">Configuration Management</label>
                         </div>
-                        <p class="setting-description">Save changes to config file or restore defaults</p>
+                        <p class="setting-description">Reset to defaults or synchronize with server</p>
                         
                         <div class="button-group">
-                            <button id="save-btn" class="btn btn-success">
-                                <span class="btn-icon">💾</span>
-                                Save to Config
-                            </button>
                             <button id="reset-btn" class="btn btn-warning">
                                 <span class="btn-icon">🔄</span>
                                 Reset to Defaults
+                            </button>
+                            <button id="sync-btn" class="btn btn-secondary">
+                                <span class="btn-icon">🔗</span>
+                                Sync from Server
                             </button>
                         </div>
                     </div>
@@ -158,7 +150,6 @@
                 </div>
             </div>
 
-            <!-- Footer -->
             <div class="hud-footer">
                 <button id="cancel-btn" class="btn btn-cancel">
                     <span class="btn-icon">✕</span>

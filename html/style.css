@@ -48,7 +48,7 @@ body {
     z-index: 10000;
     pointer-events: none;
     backdrop-filter: blur(4px);
-    background: rgba(0, 0, 0, 0.5);
+    background: transparent;
 }
 
 .hud-overlay.visible {
@@ -570,75 +570,3 @@ body {
         font-size: 16px;
     }
 }
-
-.primary-btn {
-    background: linear-gradient(135deg, #3b82f6, #06b6d4);
-    color: #fff;
-}
-.primary-btn:hover { filter: brightness(1.1); }
-.secondary-btn { background: rgba(255,255,255,0.12); color: #fff; }
-.secondary-btn:hover { background: rgba(255,255,255,0.22); }
-
-/* Button color accents */
-#toggle-btn { background: linear-gradient(135deg, #2563eb, #0ea5e9); }
-#refresh-btn { background: linear-gradient(135deg, #6366f1, #a855f7); }
-#sync-btn { background: linear-gradient(135deg, #0ea5e9, #22d3ee); }
-#local-toggle-btn { background: linear-gradient(135deg, #f97316, #fb923c); }
-#save-btn { background: linear-gradient(135deg, #22c55e, #16a34a); }
-#reset-btn { background: linear-gradient(135deg, #f59e0b, #d97706); }
-#cancel-btn { background: #4b5563; }
-#cancel-btn:hover { background: #374151; }
-
-.input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 120px;
-}
-.input-group label {
-    font-size: 12px;
-    opacity: 0.8;
-}
-.input-group input {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 8px;
-    padding: 8px 10px;
-    color: #e8eaf2;
-    font-weight: 600;
-    width: 100%;
-}
-.input-group input:focus {
-    outline: 2px solid #3b82f6;
-}
-.position-readout {
-    font-size: 13px;
-    opacity: 0.85;
-    padding: 6px 10px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.08);
-}
-
-.slider-label { margin-right: 6px; opacity: 0.9; }
-#opacity-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    height: 6px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, rgba(59,130,246,0.8), rgba(6,182,212,0.8));
-    outline: none;
-}
-#opacity-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #fff;
-    border: 2px solid #3b82f6;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-}
-#opacity-value { width: 48px; text-align: right; opacity: 0.9; }

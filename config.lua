@@ -12,7 +12,7 @@ Config = {
 
     -- Watermark opacity (0.0 to 1.0)
     -- 0.0 = fully transparent, 1.0 = fully opaque
-    Opacity = 0.8,
+    Opacity = 0.5,
 
     -- Watermark size
     Width = 150,   -- Width in pixels
@@ -20,7 +20,7 @@ Config = {
 
     -- Position offsets from top-right corner (in pixels)
     -- Positive values move left and down
-    OffsetX = 20,  -- Distance from right edge
+    OffsetX = 28,  -- Distance from right edge
     OffsetY = 20,  -- Distance from top edge
     
     -- Discord role-based permission for /watermark HUD

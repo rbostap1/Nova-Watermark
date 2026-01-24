@@ -1,6 +1,5 @@
 console.log('[Watermark] Control Center loaded');
 
-// ==================== State Management ====================
 let currentOffsetX = 20;
 let currentOffsetY = 20;
 let watermarkWidth = 150;
@@ -20,7 +19,6 @@ let hudState = {
     localHidden: false
 };
 
-// ==================== Message Handling ====================
 window.addEventListener('message', function(event) {
     const data = event.data;
     console.log('[Watermark] Received action:', data.action);
@@ -50,7 +48,6 @@ function handleShowWatermark(data) {
     watermarkHeight = data.height;
 
     const imagePath = `nui://Watermark/${data.image}`;
-    console.log('[Watermark] Loading image:', imagePath);
     
     watermarkImage.src = imagePath;
     watermarkImage.style.width = data.width + 'px';
@@ -60,9 +57,6 @@ function handleShowWatermark(data) {
     watermark.style.right = data.offsetX + 'px';
     watermark.style.top = data.offsetY + 'px';
     watermark.classList.add('visible');
-
-    watermarkImage.onerror = () => console.error('[Watermark] Failed to load:', imagePath);
-    watermarkImage.onload = () => console.log('[Watermark] Image loaded successfully');
 }
 
 function handleHideWatermark() {
@@ -103,16 +97,11 @@ function handleUpdateOpacity(data) {
 }
 
 function handleSyncState(data) {
-    if (type(data.state) === 'table') {
+    if (data.state && typeof data.state === 'object') {
         applyHudState(data.state);
     }
 }
 
-function type(val) {
-    return Object.prototype.toString.call(val).slice(8, -1).toLowerCase();
-}
-
-// ==================== HUD State Application ====================
 function applyHudState(state) {
     hudState.enabled = typeof state.enabled === 'boolean' ? state.enabled : hudState.enabled;
     hudState.opacity = typeof state.opacity === 'number' ? state.opacity : hudState.opacity;
@@ -123,7 +112,6 @@ function applyHudState(state) {
     currentOffsetX = hudState.offsetX;
     currentOffsetY = hudState.offsetY;
 
-    // Update UI elements
     const opacitySlider = document.getElementById('opacity-slider');
     if (opacitySlider) {
         opacitySlider.value = Math.round(hudState.opacity * 100);
@@ -181,7 +169,6 @@ function updateStatusDisplay() {
     }
 }
 
-// ==================== NUI Communication ====================
 function postNUI(action, payload) {
     fetch('https://Watermark/' + action, {
         method: 'POST',
@@ -190,13 +177,11 @@ function postNUI(action, payload) {
     }).catch(err => console.error('[Watermark] NUI call failed:', err));
 }
 
-// ==================== Dragging System ====================
 function setupDragSystem() {
     const hudCard = document.querySelector('.hud-container');
     const hudHeader = document.querySelector('.hud-header');
     const watermark = document.getElementById('watermark');
 
-    // HUD Header Drag
     hudHeader.addEventListener('mousedown', (e) => {
         if (e.target.closest('.close-btn')) return;
         
@@ -212,7 +197,6 @@ function setupDragSystem() {
         e.preventDefault();
     });
 
-    // Watermark Drag
     watermark.addEventListener('mousedown', (e) => {
         if (!watermark.classList.contains('draggable')) return;
         
@@ -227,7 +211,6 @@ function setupDragSystem() {
         e.preventDefault();
     });
 
-    // Mouse Move
     document.addEventListener('mousemove', (e) => {
         if (isDraggingHUD) {
             const deltaX = e.clientX - dragStartX;
@@ -255,14 +238,12 @@ function setupDragSystem() {
         }
     });
 
-    // Mouse Up
     document.addEventListener('mouseup', () => {
         isDraggingHUD = false;
         isDraggingWatermark = false;
     });
 }
 
-// ==================== Tab System ====================
 function setupTabs() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -282,7 +263,6 @@ function setupTabs() {
     });
 }
 
-// ==================== Event Listeners ====================
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[Watermark] Initializing controls');
 
@@ -290,13 +270,11 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDragSystem();
     setupTabs();
 
-    // Button references
     const toggleBtn = document.getElementById('toggle-btn');
     const localToggleBtn = document.getElementById('local-toggle-btn');
     const refreshBtn = document.getElementById('refresh-btn');
     const syncBtn = document.getElementById('sync-btn');
     const closeBtn = document.getElementById('hud-close');
-    const saveBtn = document.getElementById('save-btn');
     const resetBtn = document.getElementById('reset-btn');
     const cancelBtn = document.getElementById('cancel-btn');
     const posXInput = document.getElementById('pos-x-input');
@@ -304,7 +282,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const posApplyBtn = document.getElementById('pos-apply-btn');
     const opacitySlider = document.getElementById('opacity-slider');
 
-    // Toggle Watermark (Server-Wide)
     if (toggleBtn) {
         toggleBtn.addEventListener('click', () => {
             console.log('[Watermark] Toggling server-wide visibility');
@@ -312,7 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Toggle Local Hidden
     if (localToggleBtn) {
         localToggleBtn.addEventListener('click', () => {
             console.log('[Watermark] Toggling local visibility');
@@ -320,7 +296,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Refresh Display
     if (refreshBtn) {
         refreshBtn.addEventListener('click', () => {
             console.log('[Watermark] Refreshing display');
@@ -328,7 +303,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Sync State
     if (syncBtn) {
         syncBtn.addEventListener('click', () => {
             console.log('[Watermark] Syncing state from server');
@@ -336,7 +310,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Close HUD
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
             console.log('[Watermark] Closing HUD');
@@ -344,7 +317,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Cancel (same as close)
     if (cancelBtn) {
         cancelBtn.addEventListener('click', () => {
             console.log('[Watermark] Canceling - closing HUD');
@@ -352,15 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Save Settings to Config
-    if (saveBtn) {
-        saveBtn.addEventListener('click', () => {
-            console.log('[Watermark] Saving settings to config');
-            postNUI('hud:saveState', {});
-        });
-    }
-
-    // Reset to Defaults
     if (resetBtn) {
         resetBtn.addEventListener('click', () => {
             console.log('[Watermark] Resetting to defaults');
@@ -368,7 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Position Input
     if (posApplyBtn) {
         posApplyBtn.addEventListener('click', () => {
             const xVal = parseInt(posXInput.value, 10);
@@ -383,7 +345,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Opacity Slider
     if (opacitySlider) {
         opacitySlider.addEventListener('input', (e) => {
             const value = parseInt(e.target.value, 10);
