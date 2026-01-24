@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watermark</title>
+    <title>Watermark Control Center</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,29 +11,154 @@
         <img id="watermark-image" src="" alt="Watermark">
     </div>
 
-    <!-- HUD Overlay -->
     <div id="hud-overlay" class="hud-overlay hidden">
-        <div class="hud-card">
+        <div class="hud-container">
             <div class="hud-header">
-                <div class="hud-title">Watermark Controls</div>
-                <button id="hud-close" class="icon-btn" aria-label="Close">✕</button>
+                <div class="header-content">
+                    <div class="header-icon">⚙️</div>
+                    <div class="header-text">
+                        <h1 class="header-title">Watermark Control Center</h1>
+                        <p class="header-subtitle">Server-wide Configuration</p>
+                    </div>
+                </div>
+                <button id="hud-close" class="close-btn" aria-label="Close">✕</button>
             </div>
+
             <div class="hud-content">
-                <div class="hud-row">
-                    <button id="toggle-btn" class="primary-btn">Toggle Logo</button>
-                    <button id="refresh-btn" class="secondary-btn">Refresh Logo</button>
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="visibility">Visibility</button>
+                    <button class="tab-btn" data-tab="position">Position</button>
+                    <button class="tab-btn" data-tab="advanced">Advanced</button>
                 </div>
-                <div class="hud-row">
-                    <label class="slider-label" for="opacity-slider">Opacity</label>
-                    <input id="opacity-slider" type="range" min="0" max="100" value="80" />
-                    <span id="opacity-value">0.80</span>
+
+                <div id="visibility-tab" class="tab-content active">
+                    <div class="setting-group">
+                        <div class="setting-header">
+                            <label class="setting-label">Server-Wide Visibility</label>
+                            <div class="status-badge" id="visibility-status">Visible</div>
+                        </div>
+                        <p class="setting-description">Control watermark visibility across the entire server</p>
+                        <div class="button-group">
+                            <button id="toggle-btn" class="btn btn-primary">
+                                <span class="btn-icon">👁️</span>
+                                Hide Watermark
+                            </button>
+                            <button id="local-toggle-btn" class="btn btn-secondary">
+                                <span class="btn-icon">🔍</span>
+                                Hide Locally
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="setting-group">
+                        <div class="setting-header">
+                            <label class="setting-label">Opacity Control</label>
+                            <span id="opacity-value" class="opacity-display">80%</span>
+                        </div>
+                        <p class="setting-description">Adjust watermark transparency (0-100%)</p>
+                        <div class="slider-container">
+                            <input id="opacity-slider" type="range" min="0" max="100" value="80" class="slider" />
+                            <div class="slider-labels">
+                                <span>0%</span>
+                                <span>50%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="hud-row" style="font-size: 12px; opacity: 0.7; margin-top: 8px;">
-                    Position: <span id="position-display">X: 20, Y: 20</span>
+
+                <div id="position-tab" class="tab-content">
+                    <div class="setting-group">
+                        <div class="setting-header">
+                            <label class="setting-label">Watermark Position</label>
+                            <div class="position-readout">
+                                <span id="position-display">X: 20, Y: 20</span>
+                            </div>
+                        </div>
+                        <p class="setting-description">Customize watermark location on screen. Drag the watermark directly or use manual controls.</p>
+                        
+                        <div class="position-inputs">
+                            <div class="input-group">
+                                <label for="pos-x-input">Horizontal Position (X)</label>
+                                <div class="input-wrapper">
+                                    <input id="pos-x-input" type="number" min="0" max="10000" step="1" value="20">
+                                    <span class="input-unit">px</span>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="pos-y-input">Vertical Position (Y)</label>
+                                <div class="input-wrapper">
+                                    <input id="pos-y-input" type="number" min="0" max="10000" step="1" value="20">
+                                    <span class="input-unit">px</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="pos-apply-btn" class="btn btn-secondary" style="width: 100%; margin-top: 12px;">
+                            <span class="btn-icon">📍</span>
+                            Apply Position
+                        </button>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="info-box">
+                        <span class="info-icon">ℹ️</span>
+                        <span>Drag the watermark on screen to reposition it when HUD is open</span>
+                    </div>
                 </div>
+
+                <div id="advanced-tab" class="tab-content">
+                    <div class="setting-group">
+                        <div class="setting-header">
+                            <label class="setting-label">Configuration Management</label>
+                        </div>
+                        <p class="setting-description">Reset to defaults or synchronize with server</p>
+                        
+                        <div class="button-group">
+                            <button id="reset-btn" class="btn btn-warning">
+                                <span class="btn-icon">🔄</span>
+                                Reset to Defaults
+                            </button>
+                            <button id="sync-btn" class="btn btn-secondary">
+                                <span class="btn-icon">🔗</span>
+                                Sync from Server
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="setting-group">
+                        <div class="setting-header">
+                            <label class="setting-label">Utility Functions</label>
+                        </div>
+                        <p class="setting-description">Refresh and synchronize settings</p>
+                        
+                        <div class="button-group">
+                            <button id="refresh-btn" class="btn btn-secondary">
+                                <span class="btn-icon">🔄</span>
+                                Refresh Display
+                            </button>
+                            <button id="sync-btn" class="btn btn-secondary">
+                                <span class="btn-icon">🔗</span>
+                                Sync from Server
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-footer">
+                <button id="cancel-btn" class="btn btn-cancel">
+                    <span class="btn-icon">✕</span>
+                    Close
+                </button>
             </div>
         </div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
