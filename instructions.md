@@ -5,21 +5,18 @@ This guide explains how to use the in-game Watermark HUD and how to lock access 
 ## Overview
 
 - Command: `/watermark`
-- HUD Controls:
-- HUD Controls:
-  - Hide/Show Logo: Server-wide visibility toggle
-  - Hide/Show (Client Only): Affects only your view
-  - Refresh Logo: Reload the watermark image and settings
-  - Sync: Pull latest server state
-  - Opacity: Adjust transparency live (0.0–1.0), server-wide
-  - Drag watermark: Move it; new position is server-wide
-  - Save: Broadcast current opacity/position/visibility to everyone
-  - Reset Defaults: Restore config defaults server-wide
-  - Cancel or ✕: Close HUD without saving
+- **HUD Features**:
+  - Hide/Show watermark server-wide
+  - Hide/Show locally (client-only)
+  - Adjust opacity (0-100%, auto-saves)
+  - Reposition watermark via drag or manual input (auto-saves)
+  - Refresh display
+  - Sync with server
+  - Reset to hardcoded defaults
 - Access Control: Only players with allowed Discord roles can open the HUD
-- Server sync: visibility, opacity, and position changes are server-wide and apply instantly to all clients. The client-only hide toggle affects only the local player.
-- Save broadcasts the current in-memory state; it does not write back to `config.lua`.
-- Only HUD access is gated; watermark display on join still follows `Config.Enabled`.
+- **Server sync**: Opacity and position changes auto-save and sync instantly with all clients
+- **Client-only hide**: Affects only the local player's view
+- **Reset Defaults**: Restores hardcoded values (OffsetX=28, OffsetY=20, opacity=0.5)
 
 ## Prerequisites
 
@@ -71,12 +68,13 @@ What the script does:
 
 ## Usage
 
-- In-game, type `/watermark`
+- In-game, type `/watermark` to open the HUD
 - If you have an allowed role, the HUD appears with:
-  - Toggle Logo
-  - Refresh Logo
-  - Opacity slider (0–100, mapped to 0.0–1.0)
-- Closing the HUD uses the ✕ button; controls instantly update the on-screen watermark.
+  - **Visibility Tab**: Toggle server visibility, local hide, opacity control
+  - **Position Tab**: Manual X/Y input or drag watermark to reposition
+  - **Advanced Tab**: Reset to defaults, refresh display, sync with server
+- All opacity and position changes auto-save to `config.lua`
+- Closing the HUD uses the ✕ button; all changes persist
 
 ## Troubleshooting
 

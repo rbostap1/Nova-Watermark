@@ -11,16 +11,16 @@ A professional, feature-rich watermark script for FiveM with a modern HUD interf
 - **Drag & Drop**: Directly position watermark on screen
 - **Responsive Design**: Works on all resolutions
 
-### 💾 Config Persistence
-- **Automatic Saving**: Settings save to `config.lua` and persist across restarts
+### 💾 Auto-Save Configuration
+- **Automatic Persistence**: Opacity and position changes auto-save to `config.lua`
+- **Instant Sync**: All changes broadcast server-wide instantly
+- **Clean Operation**: No manual save button needed
 - **Audit Trail**: Complete logging of all configuration changes
-- **Safe Updates**: Automatic file I/O with error handling
-- **Backup Safe**: Original config structure preserved
 
 ### 📋 Improved Logging
-- **Smart Logging**: Only logs when settings are saved (not every adjustment)
+- **Smart Logging**: Only logs position changes (not opacity adjustments)
 - **Audit Trail**: Shows player ID, exact values, and state
-- **Clean Console**: No spam from slider movements
+- **Clean Chat**: No spam from slider movements
 - **Color-Coded Output**: Visual distinction for info/success/warning/error
 
 ## Features
@@ -35,10 +35,10 @@ A professional, feature-rich watermark script for FiveM with a modern HUD interf
 
 ✅ **Configuration Features**
 - ⚙️ Fully configurable via `config.lua`
-- 💾 One-click "Save to Config" - persists to disk
-- 🔄 Reset to Defaults button
+- 💾 Auto-save for opacity and position changes
+- 🔄 Reset to Defaults button (OffsetX=28, OffsetY=20, opacity=0.5)
 - 📊 Real-time preview while adjusting
-- 📝 Automatic logging of all saves
+- 📝 Automatic logging of position updates
 
 ✅ **Interface Features**
 - 🎮 Professional in-game HUD (`/watermark`)
@@ -76,14 +76,14 @@ Config = {
     Image = 'images/placeholder.jpg',
 
     -- Watermark opacity (0.0 = transparent, 1.0 = opaque)
-    Opacity = 0.8,
+    Opacity = 0.5,
 
     -- Watermark dimensions
     Width = 150,   -- Pixels
     Height = 150,  -- Pixels
 
     -- Position offsets from top-right corner
-    OffsetX = 20,  -- Pixels from right edge
+    OffsetX = 28,  -- Pixels from right edge
     OffsetY = 20,  -- Pixels from top edge
     
     -- Discord role-based permission (optional)
@@ -114,10 +114,9 @@ Opens the professional HUD interface where you can:
 - **Apply Position**: Confirm changes
 
 ### Advanced Tab
-- **Save to Config**: Persist changes to disk (creates server log)
-- **Reset to Defaults**: Restore original settings
-- **Refresh Display**: Redraw without changes
+- **Reset to Defaults**: Restore hardcoded defaults (OffsetX=28, OffsetY=20, opacity=0.5)
 - **Sync from Server**: Re-sync state
+- **Refresh Display**: Redraw without changes
 
 ## Console Commands
 
@@ -153,9 +152,11 @@ If `DiscordRoleIds` is empty `{}`, all players can access the HUD.
 ```
 
 ### Chat Feedback
-- **Green**: ✓ Settings saved successfully
+- **Green**: ✓ Configuration change successful (position/reset)
 - **White/Yellow**: ⚠️ Operation pending
 - **Red**: ✗ Error or permission denied
+
+**Note**: Opacity changes do not generate chat messages (silent update)
 
 ## File Structure
 
@@ -280,22 +281,20 @@ See LICENSE file for details
 ## Commands
 
 ### Watermark HUD
-Open the HUD to toggle, refresh, adjust opacity, and move the watermark:
+Open the HUD to toggle, adjust opacity, and move the watermark:
 
 ```
 /watermark
 ```
 
-Access can be restricted to specific Discord roles.
-
-**HUD controls**
-- Hide/Show Logo (server-wide)
-- Hide/Show (client only)
-- Refresh Logo
-- Sync (pull latest server state)
-- Opacity slider (live)
-- Drag watermark to move (sends new server-wide position)
-- Save (broadcasts current state), Reset Defaults (applies config defaults), Cancel/X (close only)
+**HUD Controls**
+- **Toggle Visibility**: Show/hide watermark server-wide
+- **Local Hide**: Hide just for you (doesn't affect server)
+- **Opacity Slider**: Adjust transparency (0-100%, auto-saves)
+- **Position Controls**: Manual X/Y input or drag to position (auto-saves)
+- **Reset Defaults**: Restore hardcoded defaults
+- **Refresh Display**: Redraw without changes
+- **Sync from Server**: Re-sync state
 
 ### Permissions via Discord Roles
 This resource uses Badger_Discord_API for Discord role checks.
