@@ -100,6 +100,20 @@ function handleUpdateOpacity(data) {
 function handleSyncState(data) {
     if (data.state && typeof data.state === 'object') {
         applyHudState(data.state);
+        // Update watermark position and dimensions on screen after state sync
+        const watermark = document.getElementById('watermark');
+        const watermarkImage = document.getElementById('watermark-image');
+        if (watermark && data.state.offsetX !== undefined && data.state.offsetY !== undefined) {
+            watermark.style.right = data.state.offsetX + 'px';
+            watermark.style.top = data.state.offsetY + 'px';
+        }
+        if (watermarkImage && data.state.width !== undefined && data.state.height !== undefined) {
+            watermarkImage.style.width = data.state.width + 'px';
+            watermarkImage.style.height = data.state.height + 'px';
+        }
+        if (watermarkImage && data.state.opacity !== undefined) {
+            watermarkImage.style.opacity = data.state.opacity;
+        }
     }
 }
 
@@ -112,6 +126,14 @@ function applyHudState(state) {
 
     currentOffsetX = hudState.offsetX;
     currentOffsetY = hudState.offsetY;
+
+    // Update watermark dimensions if provided
+    if (typeof state.width === 'number') {
+        watermarkWidth = state.width;
+    }
+    if (typeof state.height === 'number') {
+        watermarkHeight = state.height;
+    }
 
     const opacitySlider = document.getElementById('opacity-slider');
     if (opacitySlider) {
@@ -329,6 +351,11 @@ document.addEventListener('DOMContentLoaded', () => {
         resetBtn.addEventListener('click', () => {
             console.log('[Watermark] Resetting to defaults');
             postNUI('hud:resetDefaults', {});
+            // Request state sync after reset to ensure UI updates
+            setTimeout(() => {
+                console.log('[Watermark] Requesting state sync after reset');
+                postNUI('hud:syncState', {});
+            }, 500);
         });
     }
 

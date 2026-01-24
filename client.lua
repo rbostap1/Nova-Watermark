@@ -131,7 +131,9 @@ RegisterNetEvent('watermark:stateSync', function(newState)
                 opacity = serverState.opacity,
                 offsetX = serverState.offsetX,
                 offsetY = serverState.offsetY,
-                localHidden = localHidden
+                localHidden = localHidden,
+                width = serverState.width,
+                height = serverState.height
             }
         })
     end
