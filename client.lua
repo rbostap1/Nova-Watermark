@@ -83,9 +83,9 @@ end
 
 local function CloseHUD()
     SetNuiFocus(false, false)
-    SetNuiFocusKeepInput(false)
     hudOpen = false
     SendNUIMessage({ action = 'closeHUD' })
+    log('info', 'HUD closed')
 end
 
 RegisterCommand('watermark', function()
@@ -237,6 +237,12 @@ RegisterNUICallback('hud:syncState', function(_, cb)
     log('info', 'Syncing state from server')
     TriggerServerEvent('watermark:requestState')
     TriggerEvent('chat:addMessage', { color = {255, 255, 255}, multiline = true, args = {'Watermark', 'Syncing with server...'} })
+    cb({ success = true })
+end)
+
+RegisterNUICallback('hud:close', function(_, cb)
+    log('info', 'Close HUD callback triggered')
+    CloseHUD()
     cb({ success = true })
 end)
 

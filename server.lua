@@ -258,6 +258,17 @@ RegisterNetEvent('watermark:resetState', function()
 	state.enabled = Config.Enabled
 	state.image = Config.Image
 
+	-- Save the defaults to config file
+	local configContent = LoadResourceFile(GetCurrentResourceName(), configFilePath)
+	if configContent then
+		configContent = string.gsub(configContent, 'Opacity%s*=%s*[%d.]+', 'Opacity = 0.5')
+		configContent = string.gsub(configContent, 'OffsetX%s*=%s*%d+', 'OffsetX = 28')
+		configContent = string.gsub(configContent, 'OffsetY%s*=%s*%d+', 'OffsetY = 20')
+		configContent = string.gsub(configContent, 'Width%s*=%s*%d+', 'Width = 150')
+		configContent = string.gsub(configContent, 'Height%s*=%s*%d+', 'Height = 150')
+		SaveResourceFile(GetCurrentResourceName(), configFilePath, configContent, -1)
+	end
+
 	log('success', 'Watermark reset to defaults by player ' .. src)
 	sendState()
 	notifyResult(src, 'resetState', true, 'Watermark reset to defaults (OffsetX=28, OffsetY=20, opacity=0.5, width=150, height=150).')

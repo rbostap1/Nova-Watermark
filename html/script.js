@@ -85,6 +85,7 @@ function handleCloseHUD() {
     overlay.classList.add('hidden');
     overlay.classList.remove('visible');
     watermark.classList.remove('draggable');
+    console.log('[Watermark] HUD closed successfully');
 }
 
 function handleUpdateOpacity(data) {
