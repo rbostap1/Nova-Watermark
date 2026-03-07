@@ -81,13 +81,13 @@ body {
     max-height: calc(100vh - 24px);
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--line-soft);
+    border: none;
     border-radius: 18px;
     overflow: hidden;
     background:
         linear-gradient(160deg, var(--bg-mid), var(--bg-deep)),
         repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.015) 1px, transparent 1px, transparent 20px);
-    box-shadow: 0 28px 60px rgba(0, 0, 0, 0.62), 0 0 0 1px rgba(88, 211, 247, 0.1) inset;
+    box-shadow: 0 28px 60px rgba(0, 0, 0, 0.62);
     backdrop-filter: blur(8px);
     animation: panelEnter 0.25s cubic-bezier(.16, .8, .24, 1);
 }

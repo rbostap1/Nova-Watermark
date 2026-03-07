@@ -99,11 +99,6 @@ RegisterNetEvent('watermark:discordPermResult', function(allowed)
         OpenHUD()
     else
         log('warning', 'Player denied access to HUD - insufficient permissions')
-        TriggerEvent('chat:addMessage', {
-            color = {255, 0, 0},
-            multiline = true,
-            args = {"Watermark", "You don't have permission to use /watermark."}
-        })
     end
 end)
 
@@ -143,11 +138,9 @@ RegisterNetEvent('watermark:actionResult', function(data)
     if type(data) ~= 'table' then return end
     local msg = data.message or 'Action complete.'
     local ok = data.success
-    local color = ok and {0, 255, 0} or {255, 0, 0}
     local level = ok and 'success' or 'warning'
     
     log(level, 'Action: ' .. (data.action or 'unknown') .. ' - ' .. msg)
-    TriggerEvent('chat:addMessage', { color = color, multiline = true, args = {'Watermark', msg} })
 end)
 
 RegisterNUICallback('hud:toggle', function(_, cb)
@@ -156,7 +149,6 @@ RegisterNUICallback('hud:toggle', function(_, cb)
     nuiEnabled = newState
     log('info', 'Toggling watermark visibility: ' .. (newState and 'SHOW' or 'HIDE'))
     TriggerServerEvent('watermark:setEnabled', { enabled = newState })
-    TriggerEvent('chat:addMessage', { color = {255, 255, 255}, multiline = true, args = {'Watermark', 'Toggling watermark visibility...'} })
     cb({ enabled = newState })
 end)
 
@@ -185,11 +177,9 @@ RegisterNUICallback('hud:refresh', function(_, cb)
     end)
     if success then
         log('success', 'Watermark display refreshed')
-        TriggerEvent('chat:addMessage', { color = {0, 255, 0}, multiline = true, args = {"Watermark", "Watermark refreshed."} })
         cb({ success = true })
     else
         log('error', 'Error refreshing watermark: ' .. tostring(err))
-        TriggerEvent('chat:addMessage', { color = {255, 0, 0}, multiline = true, args = {"Watermark", "Error refreshing watermark."} })
         cb({ success = false, error = tostring(err) })
     end
 end)
@@ -219,11 +209,9 @@ RegisterNUICallback('hud:updatePosition', function(data, cb)
         serverState.offsetY = offsetY
         log('info', 'Position updated to X:' .. offsetX .. ' Y:' .. offsetY)
         TriggerServerEvent('watermark:setPosition', offsetX, offsetY)
-        TriggerEvent('chat:addMessage', { color = {255, 255, 255}, multiline = true, args = {'Watermark', ('Position updated to X:%d Y:%d...'):format(offsetX, offsetY)} })
         cb({ success = true })
     else
         log('error', 'Invalid position values')
-        TriggerEvent('chat:addMessage', { color = {255, 0, 0}, multiline = true, args = {'Watermark', 'Invalid position values.'} })
         cb({ success = false })
     end
 end)
@@ -231,14 +219,12 @@ end)
 RegisterNUICallback('hud:resetDefaults', function(_, cb)
     log('info', 'Resetting to config defaults')
     TriggerServerEvent('watermark:resetState')
-    TriggerEvent('chat:addMessage', { color = {255, 255, 255}, multiline = true, args = {'Watermark', 'Resetting to defaults...'} })
     cb({ success = true })
 end)
 
 RegisterNUICallback('hud:syncState', function(_, cb)
     log('info', 'Syncing state from server')
     TriggerServerEvent('watermark:requestState')
-    TriggerEvent('chat:addMessage', { color = {255, 255, 255}, multiline = true, args = {'Watermark', 'Syncing with server...'} })
     cb({ success = true })
 end)
 
