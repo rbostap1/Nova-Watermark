@@ -1,238 +1,172 @@
--- Watermark Client Script for FiveM
+local resourceName = GetCurrentResourceName()
 
-local nuiEnabled = false
-local hudOpen = false
-local currentOpacity = Config.Opacity
-local localHidden = false
-
-local serverState = {
-    enabled = Config.Enabled,
-    opacity = Config.Opacity,
-    offsetX = Config.OffsetX,
-    offsetY = Config.OffsetY,
-    image = Config.Image,
-    width = Config.Width,
-    height = Config.Height
+local currentState = {
+    enabled = true,
+    opacity = 0.5,
+    offsetX = 28,
+    offsetY = 20,
+    width = 150,
+    height = 150,
+    image = 'images/placeholder.jpg'
 }
 
--- ==================== Logging Helper ====================
+local hudOpen = false
+
 local function log(level, message)
-	local levelMap = {
-		['info'] = '^2',
-		['success'] = '^2',
-		['warning'] = '^3',
-		['error'] = '^1'
-	}
-	local prefix = levelMap[level] or '^0'
-	print(prefix .. '[Watermark-Client] ' .. message .. '^7')
+    local prefixes = {
+        info = '^2',
+        success = '^2',
+        warning = '^3',
+        error = '^1'
+    }
+
+    local prefix = prefixes[level] or '^0'
+    print(prefix .. '[Watermark-Client] ' .. message .. '^7')
 end
 
--- ==================== Initialization ====================
-Citizen.CreateThread(function()
-    Wait(500)
-    log('info', 'Requesting initial state from server')
+local function requestState()
     TriggerServerEvent('watermark:requestState')
-end)
+end
 
-local function ShowWatermark()
-    local state = serverState or {}
-    currentOpacity = state.opacity or currentOpacity
-
+local function showWatermark()
     SendNUIMessage({
         action = 'showWatermark',
-        image = state.image or Config.Image,
-        width = state.width or Config.Width,
-        height = state.height or Config.Height,
-        offsetX = state.offsetX or Config.OffsetX,
-        offsetY = state.offsetY or Config.OffsetY,
-        opacity = state.opacity or currentOpacity
+        state = currentState
     })
-    nuiEnabled = true
-    log('info', 'Watermark displayed')
 end
 
-local function HideWatermark()
+local function hideWatermark()
     SendNUIMessage({ action = 'hideWatermark' })
-    nuiEnabled = false
-    log('info', 'Watermark hidden')
 end
 
-local function ApplyVisibility()
-    if serverState.enabled and not localHidden then
-        ShowWatermark()
+local function pushStateToUi()
+    if currentState.enabled then
+        showWatermark()
     else
-        HideWatermark()
+        hideWatermark()
+    end
+
+    if hudOpen then
+        SendNUIMessage({
+            action = 'syncState',
+            state = currentState
+        })
     end
 end
 
-local function OpenHUD()
+local function openHud()
+    hudOpen = true
     SetNuiFocus(true, true)
     SetNuiFocusKeepInput(false)
-    hudOpen = true
+
     SendNUIMessage({
         action = 'openHUD',
-        state = {
-            enabled = serverState.enabled,
-            opacity = serverState.opacity,
-            offsetX = serverState.offsetX,
-            offsetY = serverState.offsetY,
-            localHidden = localHidden
-        }
+        state = currentState
     })
 end
 
-local function CloseHUD()
-    SetNuiFocus(false, false)
+local function closeHud()
     hudOpen = false
+    SetNuiFocus(false, false)
+    SetNuiFocusKeepInput(false)
     SendNUIMessage({ action = 'closeHUD' })
-    log('info', 'HUD closed')
 end
 
+CreateThread(function()
+    Wait(250)
+    log('info', 'Requesting initial watermark state from server')
+    requestState()
+end)
+
 RegisterCommand('watermark', function()
-    log('info', 'Player requested watermark HUD access')
+    log('info', 'Requesting HUD access check')
     TriggerServerEvent('watermark:checkDiscordAccess')
 end, false)
 
 RegisterNetEvent('watermark:discordPermResult', function(allowed)
     if allowed then
-        log('success', 'Player has permission to access HUD')
-        OpenHUD()
+        log('success', 'HUD access granted')
+        openHud()
+        requestState()
     else
-        log('warning', 'Player denied access to HUD - insufficient permissions')
+        log('warning', 'HUD access denied')
     end
 end)
 
-RegisterNetEvent('watermark:stateSync', function(newState)
-    if type(newState) == 'table' then
-        serverState.enabled = newState.enabled
-        serverState.opacity = newState.opacity or serverState.opacity
-        serverState.offsetX = newState.offsetX or serverState.offsetX
-        serverState.offsetY = newState.offsetY or serverState.offsetY
-        serverState.image = newState.image or serverState.image
-        serverState.width = newState.width or serverState.width
-        serverState.height = newState.height or serverState.height
-        currentOpacity = serverState.opacity or currentOpacity
-        
-        log('info', 'State synchronized from server')
+RegisterNetEvent('watermark:stateSync', function(nextState)
+    if type(nextState) ~= 'table' then
+        return
     end
 
-    ApplyVisibility()
+    currentState.enabled = nextState.enabled ~= false
+    currentState.opacity = tonumber(nextState.opacity) or currentState.opacity
+    currentState.offsetX = tonumber(nextState.offsetX) or currentState.offsetX
+    currentState.offsetY = tonumber(nextState.offsetY) or currentState.offsetY
+    currentState.width = tonumber(nextState.width) or currentState.width
+    currentState.height = tonumber(nextState.height) or currentState.height
 
-    if hudOpen then
-        SendNUIMessage({
-            action = 'syncState',
-            state = {
-                enabled = serverState.enabled,
-                opacity = serverState.opacity,
-                offsetX = serverState.offsetX,
-                offsetY = serverState.offsetY,
-                localHidden = localHidden,
-                width = serverState.width,
-                height = serverState.height
-            }
-        })
+    if type(nextState.image) == 'string' and nextState.image ~= '' then
+        currentState.image = nextState.image
     end
+
+    log('info', 'State synchronized from server')
+    pushStateToUi()
 end)
 
 RegisterNetEvent('watermark:actionResult', function(data)
-    if type(data) ~= 'table' then return end
-    local msg = data.message or 'Action complete.'
-    local ok = data.success
-    local level = ok and 'success' or 'warning'
-    
-    log(level, 'Action: ' .. (data.action or 'unknown') .. ' - ' .. msg)
+    if type(data) ~= 'table' then
+        return
+    end
+
+    local level = data.success and 'success' or 'warning'
+    log(level, ('Action %s: %s'):format(data.action or 'unknown', data.message or 'Completed'))
 end)
 
 RegisterNUICallback('hud:toggle', function(_, cb)
-    local newState = not serverState.enabled
-    serverState.enabled = newState
-    nuiEnabled = newState
-    log('info', 'Toggling watermark visibility: ' .. (newState and 'SHOW' or 'HIDE'))
-    TriggerServerEvent('watermark:setEnabled', { enabled = newState })
-    cb({ enabled = newState })
-end)
-
-RegisterNUICallback('hud:toggleLocal', function(_, cb)
-    localHidden = not localHidden
-    log('info', 'Local toggle: ' .. (localHidden and 'HIDDEN' or 'VISIBLE'))
-    ApplyVisibility()
-    SendNUIMessage({
-        action = 'syncState',
-        state = {
-            enabled = serverState.enabled,
-            opacity = serverState.opacity,
-            offsetX = serverState.offsetX,
-            offsetY = serverState.offsetY,
-            localHidden = localHidden
-        }
-    })
-    cb({ hidden = localHidden })
-end)
-
-RegisterNUICallback('hud:refresh', function(_, cb)
-    local success, err = pcall(function()
-        HideWatermark()
-        Wait(100)
-        ApplyVisibility()
-    end)
-    if success then
-        log('success', 'Watermark display refreshed')
-        cb({ success = true })
-    else
-        log('error', 'Error refreshing watermark: ' .. tostring(err))
-        cb({ success = false, error = tostring(err) })
-    end
+    TriggerServerEvent('watermark:setEnabled', { enabled = not currentState.enabled })
+    cb({ success = true })
 end)
 
 RegisterNUICallback('hud:setOpacity', function(data, cb)
-    local value = tonumber(data and data.opacity)
-    if value then
-        value = math.max(0.0, math.min(1.0, value))
-        currentOpacity = value
-        serverState.opacity = currentOpacity
-        log('info', 'Opacity adjusted to ' .. string.format('%.2f', currentOpacity))
-        TriggerServerEvent('watermark:setOpacity', currentOpacity)
-        SendNUIMessage({ action = 'updateOpacity', opacity = currentOpacity })
-        cb({ success = true, opacity = currentOpacity })
-    else
-        log('error', 'Invalid opacity value provided')
-        cb({ success = false })
-    end
+    TriggerServerEvent('watermark:setOpacity', data and data.opacity)
+    cb({ success = true })
 end)
 
-RegisterNUICallback('hud:updatePosition', function(data, cb)
-    local offsetX = tonumber(data and data.offsetX)
-    local offsetY = tonumber(data and data.offsetY)
-    
-    if offsetX and offsetY then
-        serverState.offsetX = offsetX
-        serverState.offsetY = offsetY
-        log('info', 'Position updated to X:' .. offsetX .. ' Y:' .. offsetY)
-        TriggerServerEvent('watermark:setPosition', offsetX, offsetY)
-        cb({ success = true })
-    else
-        log('error', 'Invalid position values')
+RegisterNUICallback('hud:updateLayout', function(data, cb)
+    if type(data) ~= 'table' then
         cb({ success = false })
+        return
     end
+
+    TriggerServerEvent(
+        'watermark:setLayout',
+        data.offsetX,
+        data.offsetY,
+        data.width,
+        data.height
+    )
+
+    cb({ success = true })
 end)
 
 RegisterNUICallback('hud:resetDefaults', function(_, cb)
-    log('info', 'Resetting to config defaults')
     TriggerServerEvent('watermark:resetState')
     cb({ success = true })
 end)
 
 RegisterNUICallback('hud:syncState', function(_, cb)
-    log('info', 'Syncing state from server')
-    TriggerServerEvent('watermark:requestState')
+    requestState()
+    cb({ success = true })
+end)
+
+RegisterNUICallback('hud:refresh', function(_, cb)
+    requestState()
     cb({ success = true })
 end)
 
 RegisterNUICallback('hud:close', function(_, cb)
-    log('info', 'Close HUD callback triggered')
-    CloseHUD()
+    closeHud()
     cb({ success = true })
 end)
 
-log('success', 'Watermark client script loaded')
-
+log('success', 'Watermark client relay loaded')

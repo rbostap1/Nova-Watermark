@@ -3,141 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watermark Studio</title>
+    <title>Watermark Control</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="watermark" class="watermark-container" aria-hidden="true">
+    <div id="watermark" class="watermark" aria-hidden="true">
         <img id="watermark-image" src="" alt="Watermark">
+        <div class="watermark-glow" aria-hidden="true"></div>
     </div>
 
     <div id="hud-overlay" class="hud-overlay hidden">
-        <div class="hud-container" role="dialog" aria-modal="true" aria-label="Watermark Studio">
-            <header class="hud-header" id="hud-drag-handle">
-                <div class="header-content">
-                    <div class="header-icon" aria-hidden="true">WM</div>
-                    <div class="header-text">
-                        <h1 class="header-title">Watermark Studio</h1>
-                        <p class="header-subtitle">Live server controls and visual tuning</p>
-                    </div>
+        <div class="hud-panel" role="dialog" aria-modal="true" aria-label="Watermark Control">
+            <header class="hud-header">
+                <div class="hero-copy">
+                    <span class="eyebrow">Server owned</span>
+                    <h1>Watermark Control</h1>
+                    <p>Adjust visibility, transparency, size, and placement from a single clean panel.</p>
                 </div>
-                <button id="hud-close" class="close-btn" aria-label="Close panel">Close</button>
+
+                <div class="hero-actions">
+                    <div id="visibility-status" class="status-pill">Enabled</div>
+                    <button id="hud-close" class="icon-button" type="button">Close</button>
+                </div>
             </header>
 
-            <div class="hud-content">
-                <nav class="tabs" aria-label="Control tabs">
-                    <button class="tab-btn active" data-tab="visibility">Display</button>
-                    <button class="tab-btn" data-tab="position">Position</button>
-                    <button class="tab-btn" data-tab="tools">Tools</button>
-                </nav>
+            <div class="hud-body">
+                <section class="metric-grid" aria-label="Current watermark values">
+                    <article class="metric-card">
+                        <span class="metric-label">State</span>
+                        <strong id="state-value" class="metric-value">Enabled</strong>
+                    </article>
+                    <article class="metric-card">
+                        <span class="metric-label">Opacity</span>
+                        <strong id="opacity-value" class="metric-value">50%</strong>
+                    </article>
+                    <article class="metric-card">
+                        <span class="metric-label">Canvas</span>
+                        <strong id="canvas-value" class="metric-value">28, 20 · 150 x 150</strong>
+                    </article>
+                </section>
 
-                <div id="visibility-tab" class="tab-content active">
-                    <section class="card">
-                        <div class="card-topline">Display State</div>
-                        <div class="setting-header">
-                            <label class="setting-label">Server Watermark Visibility</label>
-                            <div class="status-badge" id="visibility-status">Visible</div>
-                        </div>
-                        <p class="setting-description">Control whether all players can see the watermark. Local hide only affects your own client.</p>
-                        <div class="button-group">
-                            <button id="toggle-btn" class="btn btn-primary" type="button">
-                                <span class="btn-icon" aria-hidden="true">SV</span>
-                                Hide Watermark
-                            </button>
-                            <button id="local-toggle-btn" class="btn btn-secondary" type="button">
-                                <span class="btn-icon" aria-hidden="true">LC</span>
-                                Hide Locally
-                            </button>
-                        </div>
-                    </section>
-
-                    <section class="card">
-                        <div class="card-topline">Transparency</div>
-                        <div class="setting-header">
-                            <label class="setting-label">Opacity Control</label>
-                            <span id="opacity-value" class="opacity-display">80%</span>
-                        </div>
-                        <p class="setting-description">Set image transparency from 0% to 100%. Changes apply instantly.</p>
-                        <div class="slider-container">
-                            <input id="opacity-slider" type="range" min="0" max="100" value="80" class="slider">
-                            <div class="slider-labels">
-                                <span>0%</span>
-                                <span>50%</span>
-                                <span>100%</span>
+                <section class="card-grid">
+                    <article class="control-card card-visibility">
+                        <div class="card-head">
+                            <div>
+                                <span class="card-eyebrow">Visibility</span>
+                                <h2>Global display</h2>
                             </div>
+                            <span class="card-chip" id="visibility-chip">Visible</span>
                         </div>
-                    </section>
-                </div>
 
-                <div id="position-tab" class="tab-content">
-                    <section class="card">
-                        <div class="card-topline">Placement</div>
-                        <div class="setting-header">
-                            <label class="setting-label">Watermark Position</label>
-                            <div class="position-readout">
-                                <span id="position-display">X: 20, Y: 20</span>
+                        <p class="card-copy">This toggle is server authoritative. Every connected player receives the same visibility state.</p>
+
+                        <button id="toggle-btn" class="primary-button" type="button">Hide Watermark</button>
+                    </article>
+
+                    <article class="control-card card-appearance">
+                        <div class="card-head">
+                            <div>
+                                <span class="card-eyebrow">Appearance</span>
+                                <h2>Transparency</h2>
                             </div>
+                            <span id="opacity-readout" class="card-chip">50%</span>
                         </div>
-                        <p class="setting-description">Drag the watermark while this panel is open, or set exact coordinates manually.</p>
-                        
-                        <div class="position-inputs">
-                            <div class="input-group">
-                                <label for="pos-x-input">Horizontal Position (X)</label>
-                                <div class="input-wrapper">
-                                    <input id="pos-x-input" type="number" min="0" max="10000" step="1" value="20">
-                                    <span class="input-unit">px</span>
+
+                        <p class="card-copy">Opacity is stored on the server and updates live for all clients.</p>
+
+                        <div class="slider-wrap">
+                            <input id="opacity-slider" class="slider" type="range" min="0" max="100" value="50">
+                        </div>
+                    </article>
+
+                    <article class="control-card card-layout">
+                        <div class="card-head">
+                            <div>
+                                <span class="card-eyebrow">Layout</span>
+                                <h2>Position and size</h2>
+                            </div>
+                            <span class="card-chip">Server sync</span>
+                        </div>
+
+                        <p class="card-copy">Update the canvas in one action. The server validates and broadcasts the result.</p>
+
+                        <div class="input-grid">
+                            <label class="field">
+                                <span>X offset</span>
+                                <div class="field-input-wrap">
+                                    <input id="pos-x-input" type="number" min="0" max="10000" step="1" value="28">
+                                    <span>px</span>
                                 </div>
-                            </div>
-                            <div class="input-group">
-                                <label for="pos-y-input">Vertical Position (Y)</label>
-                                <div class="input-wrapper">
+                            </label>
+                            <label class="field">
+                                <span>Y offset</span>
+                                <div class="field-input-wrap">
                                     <input id="pos-y-input" type="number" min="0" max="10000" step="1" value="20">
-                                    <span class="input-unit">px</span>
+                                    <span>px</span>
                                 </div>
+                            </label>
+                            <label class="field">
+                                <span>Width</span>
+                                <div class="field-input-wrap">
+                                    <input id="width-input" type="number" min="20" max="2000" step="1" value="150">
+                                    <span>px</span>
+                                </div>
+                            </label>
+                            <label class="field">
+                                <span>Height</span>
+                                <div class="field-input-wrap">
+                                    <input id="height-input" type="number" min="20" max="2000" step="1" value="150">
+                                    <span>px</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <button id="layout-apply-btn" class="secondary-button" type="button">Apply Layout</button>
+                    </article>
+
+                    <article class="control-card card-maintenance">
+                        <div class="card-head">
+                            <div>
+                                <span class="card-eyebrow">Maintenance</span>
+                                <h2>Recovery tools</h2>
                             </div>
+                            <span class="card-chip">Admin only</span>
                         </div>
-                        <button id="pos-apply-btn" class="btn btn-secondary block" type="button">
-                            <span class="btn-icon" aria-hidden="true">XY</span>
-                            Apply Position
-                        </button>
-                    </section>
 
-                    <p class="hint">Tip: dragging updates coordinates live and sends the final value on release.</p>
-                </div>
+                        <p class="card-copy">Use these actions to resync with the server or restore the configured defaults.</p>
 
-                <div id="tools-tab" class="tab-content">
-                    <section class="card">
-                        <div class="card-topline">Maintenance</div>
-                        <div class="setting-header stacked">
-                            <label class="setting-label">Configuration Management</label>
-                            <p class="setting-description">Sync and refresh to recover from stale state, or reset to defaults.</p>
+                        <div class="button-row">
+                            <button id="sync-btn" class="ghost-button" type="button">Sync State</button>
+                            <button id="refresh-btn" class="ghost-button" type="button">Refresh</button>
+                            <button id="reset-btn" class="danger-button" type="button">Reset Defaults</button>
                         </div>
-                        <div class="button-group">
-                            <button id="reset-btn" class="btn btn-warning" type="button">
-                                <span class="btn-icon" aria-hidden="true">RS</span>
-                                Reset to Defaults
-                            </button>
-                            <button id="sync-btn" class="btn btn-secondary" type="button">
-                                <span class="btn-icon" aria-hidden="true">SY</span>
-                                Sync from Server
-                            </button>
-                        </div>
-                        <div class="button-group single-row">
-                            <button id="refresh-btn" class="btn btn-secondary" type="button">
-                                <span class="btn-icon" aria-hidden="true">RF</span>
-                                Refresh Display
-                            </button>
-                        </div>
-                    </section>
-                </div>
+                    </article>
+                </section>
             </div>
 
-            <div class="hud-footer">
-                <button id="cancel-btn" class="btn btn-cancel" type="button">
-                    <span class="btn-icon" aria-hidden="true">X</span>
-                    Close
-                </button>
-            </div>
+            <footer class="hud-footer">
+                <span>All edits are validated on the server before they are broadcast.</span>
+                <button id="cancel-btn" class="footer-button" type="button">Close Panel</button>
+            </footer>
         </div>
     </div>
 

@@ -1,89 +1,83 @@
--- Watermark Server Script
-
 local resourceName = GetCurrentResourceName()
-local configFilePath = 'config.lua'
+local stateKey = 'watermark:state'
 
-local state = {
-    enabled = Config.Enabled,
-    opacity = Config.Opacity,
-    offsetX = Config.OffsetX,
-    offsetY = Config.OffsetY,
-    image = Config.Image,
-    width = Config.Width,
-    height = Config.Height
+local defaults = {
+    enabled = Config.Enabled ~= false,
+    opacity = math.max(0.0, math.min(1.0, tonumber(Config.Opacity) or 0.5)),
+    offsetX = math.floor(tonumber(Config.OffsetX) or 28),
+    offsetY = math.floor(tonumber(Config.OffsetY) or 20),
+    width = math.floor(tonumber(Config.Width) or 150),
+    height = math.floor(tonumber(Config.Height) or 150),
+    image = Config.Image or 'images/placeholder.jpg'
 }
 
-local DEFAULTS = {
-    opacity = Config.Opacity,
-    offsetX = Config.OffsetX,
-    offsetY = Config.OffsetY,
-    width = Config.Width,
-    height = Config.Height
-}
-
-local hasDiscordRole
+local state = {}
 
 local function log(level, message)
-    local levelMap = {
+    local prefixes = {
         info = '^2',
         success = '^2',
         warning = '^3',
         error = '^1'
     }
-    local prefix = levelMap[level] or '^0'
+
+    local prefix = prefixes[level] or '^0'
     print(prefix .. '[Watermark-Server] ' .. message .. '^7')
 end
 
-local function clamp(value, minValue, maxValue)
-    if type(value) ~= 'number' then
+local function clampNumber(value, minimum, maximum, integer)
+    local numeric = tonumber(value)
+    if numeric == nil then
         return nil
     end
 
-    if value < minValue then
-        return minValue
+    if numeric < minimum then
+        numeric = minimum
+    elseif numeric > maximum then
+        numeric = maximum
     end
 
-    if value > maxValue then
-        return maxValue
+    if integer then
+        numeric = math.floor(numeric)
     end
 
-    return value
+    return numeric
 end
 
-local function boolToLua(value)
-    return value and 'true' or 'false'
+local function copyState(source)
+    source = type(source) == 'table' and source or {}
+
+    return {
+        enabled = source.enabled ~= false,
+        opacity = clampNumber(source.opacity, 0.0, 1.0, false) or defaults.opacity,
+        offsetX = clampNumber(source.offsetX, 0, 10000, true) or defaults.offsetX,
+        offsetY = clampNumber(source.offsetY, 0, 10000, true) or defaults.offsetY,
+        width = clampNumber(source.width, 20, 2000, true) or defaults.width,
+        height = clampNumber(source.height, 20, 2000, true) or defaults.height,
+        image = type(source.image) == 'string' and source.image ~= '' and source.image or defaults.image
+    }
 end
 
-local function saveStateToConfig()
-    local configContent = LoadResourceFile(resourceName, configFilePath)
-    if not configContent then
-        log('error', 'Failed to read config.lua for persistence')
-        return false
-    end
-
-    configContent = configContent:gsub('Enabled%s*=%s*%a+', 'Enabled = ' .. boolToLua(state.enabled))
-    configContent = configContent:gsub('Opacity%s*=%s*[%d.]+', 'Opacity = ' .. tostring(state.opacity))
-    configContent = configContent:gsub('OffsetX%s*=%s*%-?%d+', 'OffsetX = ' .. tostring(state.offsetX))
-    configContent = configContent:gsub('OffsetY%s*=%s*%-?%d+', 'OffsetY = ' .. tostring(state.offsetY))
-    configContent = configContent:gsub('Width%s*=%s*%d+', 'Width = ' .. tostring(state.width))
-    configContent = configContent:gsub('Height%s*=%s*%d+', 'Height = ' .. tostring(state.height))
-
-    local success = SaveResourceFile(resourceName, configFilePath, configContent, -1)
-    if success then
-        log('success', ('Config persisted (Enabled=%s Opacity=%.2f X=%d Y=%d)'):format(
-            boolToLua(state.enabled),
-            state.opacity,
-            state.offsetX,
-            state.offsetY
-        ))
-    else
-        log('error', 'Failed to save updated config.lua')
-    end
-
-    return success
+local function persistState()
+    SetResourceKvp(stateKey, json.encode(state))
 end
 
-local function payloadState()
+local function loadState()
+    local persisted = GetResourceKvpString(stateKey)
+
+    if persisted and persisted ~= '' then
+        local ok, decoded = pcall(json.decode, persisted)
+        if ok and type(decoded) == 'table' then
+            state = copyState(decoded)
+            return
+        end
+    end
+
+    state = copyState(defaults)
+    persistState()
+end
+
+local function snapshotState()
     return {
         enabled = state.enabled,
         opacity = state.opacity,
@@ -96,39 +90,39 @@ local function payloadState()
 end
 
 local function sendState(target)
-    TriggerClientEvent('watermark:stateSync', target or -1, payloadState())
+    TriggerClientEvent('watermark:stateSync', target or -1, snapshotState())
 end
 
-local function notifyResult(src, action, ok, message)
-    TriggerClientEvent('watermark:actionResult', src, {
+local function notifyResult(sourceId, action, ok, message)
+    TriggerClientEvent('watermark:actionResult', sourceId, {
         action = action,
         success = ok and true or false,
         message = message
     })
 end
 
-hasDiscordRole = function(src, allowed)
-    if type(allowed) ~= 'table' or #allowed == 0 then
+local function hasDiscordRole(sourceId, allowedRoles)
+    if type(allowedRoles) ~= 'table' or #allowedRoles == 0 then
         return false
     end
 
     if GetResourceState('Badger_Discord_API') ~= 'started' then
-        log('error', 'Badger_Discord_API is not started; role checks cannot run')
+        log('error', 'Badger_Discord_API is not started; Discord access checks cannot run')
         return false
     end
 
     local ok, roles = pcall(function()
-        return exports['Badger_Discord_API']:GetDiscordRoles(src)
+        return exports['Badger_Discord_API']:GetDiscordRoles(sourceId)
     end)
 
     if not ok or type(roles) ~= 'table' then
-        log('error', 'Failed to resolve Discord roles for player ' .. tostring(src))
+        log('error', 'Failed to resolve Discord roles for player ' .. tostring(sourceId))
         return false
     end
 
-    for _, role in ipairs(roles) do
-        for _, need in ipairs(allowed) do
-            if tostring(role) == tostring(need) then
+    for _, roleId in ipairs(roles) do
+        for _, allowedId in ipairs(allowedRoles) do
+            if tostring(roleId) == tostring(allowedId) then
                 return true
             end
         end
@@ -137,8 +131,8 @@ hasDiscordRole = function(src, allowed)
     return false
 end
 
-local function isAuthorized(src)
-    if src == 0 then
+local function isAuthorized(sourceId)
+    if sourceId == 0 then
         return true
     end
 
@@ -147,121 +141,114 @@ local function isAuthorized(src)
         return true
     end
 
-    return hasDiscordRole(src, allowedRoles)
+    return hasDiscordRole(sourceId, allowedRoles)
 end
 
+local function requireAuthorization(sourceId, action)
+    if isAuthorized(sourceId) then
+        return true
+    end
+
+    notifyResult(sourceId, action, false, 'Not authorized to modify watermark settings.')
+    return false
+end
+
+loadState()
+
 RegisterNetEvent('watermark:checkDiscordAccess', function()
-    local src = source
-    local allowed = isAuthorized(src)
-    TriggerClientEvent('watermark:discordPermResult', src, allowed)
+    local sourceId = source
+    TriggerClientEvent('watermark:discordPermResult', sourceId, isAuthorized(sourceId))
 end)
 
 RegisterNetEvent('watermark:requestState', function()
-    local src = source
-    sendState(src)
+    sendState(source)
 end)
 
 RegisterNetEvent('watermark:setEnabled', function(payload)
-    local src = source
+    local sourceId = source
 
-    if not isAuthorized(src) then
-        notifyResult(src, 'setEnabled', false, 'Not authorized to toggle watermark.')
+    if not requireAuthorization(sourceId, 'setEnabled') then
         return
     end
 
-    local desired = payload
+    local requested = nil
     if type(payload) == 'table' then
-        desired = payload.enabled
+        requested = payload.enabled
     end
 
-    if desired == nil then
+    if requested == nil then
         state.enabled = not state.enabled
     else
-        state.enabled = desired and true or false
+        state.enabled = requested and true or false
     end
 
+    persistState()
     sendState()
-    if saveStateToConfig() then
-        notifyResult(src, 'setEnabled', true, 'Watermark visibility updated.')
-    else
-        notifyResult(src, 'setEnabled', false, 'Visibility changed but config save failed.')
-    end
+    notifyResult(sourceId, 'setEnabled', true, ('Watermark %s.'):format(state.enabled and 'enabled' or 'disabled'))
 end)
 
 RegisterNetEvent('watermark:setOpacity', function(opacity)
-    local src = source
+    local sourceId = source
 
-    if not isAuthorized(src) then
-        notifyResult(src, 'setOpacity', false, 'Not authorized to change opacity.')
+    if not requireAuthorization(sourceId, 'setOpacity') then
         return
     end
 
-    local value = clamp(tonumber(opacity), 0.0, 1.0)
-    if not value then
-        notifyResult(src, 'setOpacity', false, 'Invalid opacity value.')
+    local value = clampNumber(opacity, 0.0, 1.0, false)
+    if value == nil then
+        notifyResult(sourceId, 'setOpacity', false, 'Invalid opacity value.')
         return
     end
 
     state.opacity = value
+    persistState()
     sendState()
-
-    if saveStateToConfig() then
-        notifyResult(src, 'setOpacity', true, ('Opacity updated to %.2f.'):format(value))
-    else
-        notifyResult(src, 'setOpacity', false, 'Opacity updated but config save failed.')
-    end
+    notifyResult(sourceId, 'setOpacity', true, ('Opacity updated to %.2f.'):format(state.opacity))
 end)
 
-RegisterNetEvent('watermark:setPosition', function(offsetX, offsetY)
-    local src = source
+RegisterNetEvent('watermark:setLayout', function(offsetX, offsetY, width, height)
+    local sourceId = source
 
-    if not isAuthorized(src) then
-        notifyResult(src, 'setPosition', false, 'Not authorized to change position.')
+    if not requireAuthorization(sourceId, 'setLayout') then
         return
     end
 
-    local x = clamp(tonumber(offsetX), 0, 10000)
-    local y = clamp(tonumber(offsetY), 0, 10000)
+    local nextOffsetX = clampNumber(offsetX, 0, 10000, true)
+    local nextOffsetY = clampNumber(offsetY, 0, 10000, true)
+    local nextWidth = clampNumber(width, 20, 2000, true)
+    local nextHeight = clampNumber(height, 20, 2000, true)
 
-    if not x or not y then
-        notifyResult(src, 'setPosition', false, 'Invalid position values.')
+    if nextOffsetX == nil or nextOffsetY == nil or nextWidth == nil or nextHeight == nil then
+        notifyResult(sourceId, 'setLayout', false, 'Invalid layout values.')
         return
     end
 
-    state.offsetX = math.floor(x)
-    state.offsetY = math.floor(y)
+    state.offsetX = nextOffsetX
+    state.offsetY = nextOffsetY
+    state.width = nextWidth
+    state.height = nextHeight
+
+    persistState()
     sendState()
-
-    if saveStateToConfig() then
-        notifyResult(src, 'setPosition', true, ('Position updated to X:%d Y:%d.'):format(state.offsetX, state.offsetY))
-    else
-        notifyResult(src, 'setPosition', false, 'Position updated but config save failed.')
-    end
+    notifyResult(
+        sourceId,
+        'setLayout',
+        true,
+        ('Layout updated to X:%d Y:%d %dx%d.'):format(state.offsetX, state.offsetY, state.width, state.height)
+    )
 end)
 
 RegisterNetEvent('watermark:resetState', function()
-    local src = source
+    local sourceId = source
 
-    if not isAuthorized(src) then
-        notifyResult(src, 'resetState', false, 'Not authorized to reset state.')
+    if not requireAuthorization(sourceId, 'resetState') then
         return
     end
 
-    state.enabled = Config.Enabled
-    state.opacity = DEFAULTS.opacity
-    state.offsetX = DEFAULTS.offsetX
-    state.offsetY = DEFAULTS.offsetY
-    state.width = DEFAULTS.width
-    state.height = DEFAULTS.height
-    state.image = Config.Image
-
+    state = copyState(defaults)
+    persistState()
     sendState()
-
-    if saveStateToConfig() then
-        notifyResult(src, 'resetState', true, 'Watermark reset to configured defaults.')
-    else
-        notifyResult(src, 'resetState', false, 'Reset applied but config save failed.')
-    end
+    notifyResult(sourceId, 'resetState', true, 'Watermark reset to configured defaults.')
 end)
 
 AddEventHandler('onServerResourceStart', function(startedResource)
@@ -269,8 +256,9 @@ AddEventHandler('onServerResourceStart', function(startedResource)
         return
     end
 
-    log('info', ('Started with Enabled=%s Opacity=%.2f Position=%d,%d Size=%dx%d'):format(
-        boolToLua(state.enabled),
+    loadState()
+    log('success', ('Loaded watermark state: enabled=%s opacity=%.2f position=%d,%d size=%dx%d'):format(
+        tostring(state.enabled),
         state.opacity,
         state.offsetX,
         state.offsetY,

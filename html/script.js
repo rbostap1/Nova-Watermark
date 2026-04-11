@@ -2,37 +2,37 @@ const RESOURCE_NAME = typeof GetParentResourceName === 'function' ? GetParentRes
 
 const ui = {
     overlay: null,
-    hud: null,
     watermark: null,
     watermarkImage: null,
-    opacitySlider: null,
+    visibilityStatus: null,
+    visibilityChip: null,
+    stateValue: null,
     opacityValue: null,
-    statusBadge: null,
-    positionDisplay: null,
+    opacityReadout: null,
+    canvasValue: null,
+    opacitySlider: null,
     posXInput: null,
     posYInput: null,
-    toggleBtn: null,
-    localToggleBtn: null
+    widthInput: null,
+    heightInput: null,
+    toggleButton: null,
+    layoutApplyButton: null,
+    syncButton: null,
+    refreshButton: null,
+    resetButton: null,
+    closeButton: null,
+    footerCloseButton: null
 };
 
 const state = {
     enabled: true,
-    localHidden: false,
-    opacity: 0.8,
-    offsetX: 20,
+    opacity: 0.5,
+    offsetX: 28,
     offsetY: 20,
     width: 150,
     height: 150,
-    isHudOpen: false,
-    isDraggingHud: false,
-    isDraggingWatermark: false,
-    dragStartX: 0,
-    dragStartY: 0,
-    baseX: 0,
-    baseY: 0,
-    rafTicking: false,
-    pendingX: 20,
-    pendingY: 20
+    image: 'images/placeholder.jpg',
+    hudOpen: false
 };
 
 function postNUI(action, payload = {}) {
@@ -43,8 +43,62 @@ function postNUI(action, payload = {}) {
     }).catch(() => null);
 }
 
-function clamp(value, min, max) {
-    return Math.min(max, Math.max(min, value));
+function clamp(value, minimum, maximum) {
+    return Math.min(maximum, Math.max(minimum, value));
+}
+
+function syncState(nextState = {}) {
+    if (typeof nextState.enabled === 'boolean') {
+        state.enabled = nextState.enabled;
+    }
+
+    if (typeof nextState.opacity === 'number') {
+        state.opacity = clamp(nextState.opacity, 0, 1);
+    }
+
+    if (typeof nextState.offsetX === 'number') {
+        state.offsetX = clamp(Math.round(nextState.offsetX), 0, 10000);
+    }
+
+    if (typeof nextState.offsetY === 'number') {
+        state.offsetY = clamp(Math.round(nextState.offsetY), 0, 10000);
+    }
+
+    if (typeof nextState.width === 'number') {
+        state.width = clamp(Math.round(nextState.width), 20, 2000);
+    }
+
+    if (typeof nextState.height === 'number') {
+        state.height = clamp(Math.round(nextState.height), 20, 2000);
+    }
+
+    if (typeof nextState.image === 'string' && nextState.image !== '') {
+        state.image = nextState.image;
+    }
+}
+
+function cacheElements() {
+    ui.overlay = document.getElementById('hud-overlay');
+    ui.watermark = document.getElementById('watermark');
+    ui.watermarkImage = document.getElementById('watermark-image');
+    ui.visibilityStatus = document.getElementById('visibility-status');
+    ui.visibilityChip = document.getElementById('visibility-chip');
+    ui.stateValue = document.getElementById('state-value');
+    ui.opacityValue = document.getElementById('opacity-value');
+    ui.opacityReadout = document.getElementById('opacity-readout');
+    ui.canvasValue = document.getElementById('canvas-value');
+    ui.opacitySlider = document.getElementById('opacity-slider');
+    ui.posXInput = document.getElementById('pos-x-input');
+    ui.posYInput = document.getElementById('pos-y-input');
+    ui.widthInput = document.getElementById('width-input');
+    ui.heightInput = document.getElementById('height-input');
+    ui.toggleButton = document.getElementById('toggle-btn');
+    ui.layoutApplyButton = document.getElementById('layout-apply-btn');
+    ui.syncButton = document.getElementById('sync-btn');
+    ui.refreshButton = document.getElementById('refresh-btn');
+    ui.resetButton = document.getElementById('reset-btn');
+    ui.closeButton = document.getElementById('hud-close');
+    ui.footerCloseButton = document.getElementById('cancel-btn');
 }
 
 function applyWatermarkStyles() {
@@ -55,255 +109,99 @@ function applyWatermarkStyles() {
     ui.watermarkImage.style.opacity = String(state.opacity);
 }
 
-function renderVisibilityStatus() {
-    ui.statusBadge.textContent = state.enabled ? 'Visible' : 'Hidden';
-    ui.statusBadge.classList.toggle('hidden', !state.enabled);
-
-    ui.toggleBtn.innerHTML = state.enabled
-        ? '<span class="btn-icon" aria-hidden="true">SV</span>Hide Watermark'
-        : '<span class="btn-icon" aria-hidden="true">SV</span>Show Watermark';
-
-    ui.localToggleBtn.innerHTML = state.localHidden
-        ? '<span class="btn-icon" aria-hidden="true">LC</span>Show Locally'
-        : '<span class="btn-icon" aria-hidden="true">LC</span>Hide Locally';
-}
-
-function renderOpacity() {
+function updateSliderVisual() {
     const percent = Math.round(state.opacity * 100);
     ui.opacitySlider.value = String(percent);
+    ui.opacitySlider.style.background = `linear-gradient(90deg, var(--accent-strong) 0%, var(--accent) ${percent}%, rgba(255,255,255,0.08) ${percent}%, rgba(255,255,255,0.08) 100%)`;
+}
+
+function renderDashboard() {
+    const percent = Math.round(state.opacity * 100);
+    const layoutSummary = `${state.offsetX}, ${state.offsetY} · ${state.width} x ${state.height}`;
+
+    ui.visibilityStatus.textContent = state.enabled ? 'Enabled' : 'Hidden';
+    ui.visibilityChip.textContent = state.enabled ? 'Visible' : 'Hidden';
+    ui.visibilityChip.classList.toggle('is-danger', !state.enabled);
+    ui.stateValue.textContent = state.enabled ? 'Enabled' : 'Hidden';
     ui.opacityValue.textContent = `${percent}%`;
-}
+    ui.opacityReadout.textContent = `${percent}%`;
+    ui.canvasValue.textContent = layoutSummary;
+    ui.toggleButton.textContent = state.enabled ? 'Hide Watermark' : 'Show Watermark';
+    ui.posXInput.value = String(state.offsetX);
+    ui.posYInput.value = String(state.offsetY);
+    ui.widthInput.value = String(state.width);
+    ui.heightInput.value = String(state.height);
 
-function renderPosition() {
-    const x = Math.round(state.offsetX);
-    const y = Math.round(state.offsetY);
-    ui.positionDisplay.textContent = `X: ${x}, Y: ${y}`;
-    ui.posXInput.value = String(x);
-    ui.posYInput.value = String(y);
-}
-
-function renderAll() {
+    updateSliderVisual();
     applyWatermarkStyles();
-    renderVisibilityStatus();
-    renderOpacity();
-    renderPosition();
 }
 
-function queueDragRender(x, y) {
-    state.pendingX = x;
-    state.pendingY = y;
+function handleWatermarkVisibility() {
+    ui.watermark.classList.toggle('is-visible', state.enabled);
+    ui.watermark.setAttribute('aria-hidden', state.enabled ? 'false' : 'true');
+}
 
-    if (state.rafTicking) {
-        return;
+function renderState(nextState = {}) {
+    syncState(nextState);
+    handleWatermarkVisibility();
+    renderDashboard();
+
+    if (state.hudOpen) {
+        ui.overlay.classList.remove('hidden');
+        ui.overlay.classList.add('visible');
     }
-
-    state.rafTicking = true;
-    requestAnimationFrame(() => {
-        state.rafTicking = false;
-        state.offsetX = state.pendingX;
-        state.offsetY = state.pendingY;
-        applyWatermarkStyles();
-        renderPosition();
-    });
 }
 
 function openHud(newState = {}) {
-    state.isHudOpen = true;
+    state.hudOpen = true;
     syncState(newState);
     ui.overlay.classList.remove('hidden');
     ui.overlay.classList.add('visible');
-    ui.watermark.classList.add('draggable');
-    renderAll();
+    renderDashboard();
 }
 
 function closeHud() {
-    state.isHudOpen = false;
+    state.hudOpen = false;
     ui.overlay.classList.add('hidden');
     ui.overlay.classList.remove('visible');
-    ui.watermark.classList.remove('draggable');
 }
 
-function syncState(next) {
-    if (typeof next.enabled === 'boolean') {
-        state.enabled = next.enabled;
-    }
-    if (typeof next.localHidden === 'boolean') {
-        state.localHidden = next.localHidden;
-    }
-    if (typeof next.opacity === 'number') {
-        state.opacity = clamp(next.opacity, 0, 1);
-    }
-    if (typeof next.offsetX === 'number') {
-        state.offsetX = clamp(next.offsetX, 0, 10000);
-    }
-    if (typeof next.offsetY === 'number') {
-        state.offsetY = clamp(next.offsetY, 0, 10000);
-    }
-    if (typeof next.width === 'number') {
-        state.width = clamp(next.width, 20, 2000);
-    }
-    if (typeof next.height === 'number') {
-        state.height = clamp(next.height, 20, 2000);
-    }
+function parseInputValue(element, minimum, maximum) {
+    const parsed = Number.parseInt(element.value, 10);
+    return clamp(Number.isNaN(parsed) ? minimum : parsed, minimum, maximum);
 }
 
-function switchTab(tabName) {
-    document.querySelectorAll('.tab-btn').forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.tab === tabName);
-    });
+function submitLayout() {
+    const payload = {
+        offsetX: parseInputValue(ui.posXInput, 0, 10000),
+        offsetY: parseInputValue(ui.posYInput, 0, 10000),
+        width: parseInputValue(ui.widthInput, 20, 2000),
+        height: parseInputValue(ui.heightInput, 20, 2000)
+    };
 
-    document.querySelectorAll('.tab-content').forEach((content) => {
-        content.classList.toggle('active', content.id === `${tabName}-tab`);
-    });
+    syncState(payload);
+    renderDashboard();
+    postNUI('hud:updateLayout', payload);
 }
 
-function setupTabHandlers() {
-    document.querySelectorAll('.tab-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            switchTab(btn.dataset.tab);
-        });
-    });
-}
-
-function setupDragHandlers() {
-    const dragHandle = document.getElementById('hud-drag-handle');
-
-    dragHandle.addEventListener('mousedown', (event) => {
-        if (event.target.closest('button')) {
-            return;
-        }
-
-        const rect = ui.hud.getBoundingClientRect();
-        state.isDraggingHud = true;
-        state.dragStartX = event.clientX;
-        state.dragStartY = event.clientY;
-        state.baseX = rect.left;
-        state.baseY = rect.top;
-
-        ui.hud.style.position = 'absolute';
-        ui.hud.style.left = `${state.baseX}px`;
-        ui.hud.style.top = `${state.baseY}px`;
-        event.preventDefault();
-    });
-
-    ui.watermark.addEventListener('mousedown', (event) => {
-        if (!state.isHudOpen) {
-            return;
-        }
-
-        state.isDraggingWatermark = true;
-        state.dragStartX = event.clientX;
-        state.dragStartY = event.clientY;
-        state.baseX = state.offsetX;
-        state.baseY = state.offsetY;
-        event.preventDefault();
-    });
-
-    document.addEventListener('mousemove', (event) => {
-        if (state.isDraggingHud) {
-            const nextLeft = state.baseX + (event.clientX - state.dragStartX);
-            const nextTop = state.baseY + (event.clientY - state.dragStartY);
-            ui.hud.style.left = `${nextLeft}px`;
-            ui.hud.style.top = `${nextTop}px`;
-            return;
-        }
-
-        if (state.isDraggingWatermark) {
-            const nextX = clamp(Math.round(state.baseX - (event.clientX - state.dragStartX)), 0, 10000);
-            const nextY = clamp(Math.round(state.baseY + (event.clientY - state.dragStartY)), 0, 10000);
-            queueDragRender(nextX, nextY);
-        }
-    });
-
-    document.addEventListener('mouseup', () => {
-        if (state.isDraggingWatermark) {
-            postNUI('hud:updatePosition', { offsetX: state.offsetX, offsetY: state.offsetY });
-        }
-
-        state.isDraggingHud = false;
-        state.isDraggingWatermark = false;
-    });
-}
-
-function setupControlHandlers() {
-    document.getElementById('toggle-btn').addEventListener('click', () => {
-        postNUI('hud:toggle');
-    });
-
-    document.getElementById('local-toggle-btn').addEventListener('click', () => {
-        postNUI('hud:toggleLocal');
-    });
-
-    document.getElementById('refresh-btn').addEventListener('click', () => {
-        postNUI('hud:refresh');
-    });
-
-    document.getElementById('sync-btn').addEventListener('click', () => {
-        postNUI('hud:syncState');
-    });
-
-    document.getElementById('reset-btn').addEventListener('click', () => {
-        postNUI('hud:resetDefaults').then(() => {
-            setTimeout(() => postNUI('hud:syncState'), 250);
-        });
-    });
-
-    document.getElementById('hud-close').addEventListener('click', () => {
-        postNUI('hud:close');
-    });
-
-    document.getElementById('cancel-btn').addEventListener('click', () => {
-        postNUI('hud:close');
-    });
-
-    document.getElementById('pos-apply-btn').addEventListener('click', () => {
-        const x = clamp(Number.parseInt(ui.posXInput.value, 10) || 0, 0, 10000);
-        const y = clamp(Number.parseInt(ui.posYInput.value, 10) || 0, 0, 10000);
-        state.offsetX = x;
-        state.offsetY = y;
-        renderPosition();
-        applyWatermarkStyles();
-        postNUI('hud:updatePosition', { offsetX: x, offsetY: y });
-    });
-
-    ui.opacitySlider.addEventListener('input', () => {
-        const value = clamp((Number.parseInt(ui.opacitySlider.value, 10) || 0) / 100, 0, 1);
-        state.opacity = value;
-        renderOpacity();
-        ui.watermarkImage.style.opacity = String(value);
-        postNUI('hud:setOpacity', { opacity: value });
-    });
-
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && state.isHudOpen) {
-            postNUI('hud:close');
-        }
-    });
-}
-
-function handleNuiMessage(event) {
+function handleMessage(event) {
     const data = event.data || {};
 
     if (data.action === 'showWatermark') {
-        syncState({
-            opacity: data.opacity,
-            offsetX: data.offsetX,
-            offsetY: data.offsetY,
-            width: data.width,
-            height: data.height
-        });
+        syncState(data.state || {});
 
-        if (data.image) {
-            ui.watermarkImage.src = `nui://${RESOURCE_NAME}/${data.image}`;
+        if (state.image) {
+            ui.watermarkImage.src = `nui://${RESOURCE_NAME}/${state.image}`;
         }
 
-        ui.watermark.classList.add('visible');
-        renderAll();
+        handleWatermarkVisibility();
+        renderDashboard();
         return;
     }
 
     if (data.action === 'hideWatermark') {
-        ui.watermark.classList.remove('visible');
+        ui.watermark.classList.remove('is-visible');
+        ui.watermark.setAttribute('aria-hidden', 'true');
         return;
     }
 
@@ -317,39 +215,62 @@ function handleNuiMessage(event) {
         return;
     }
 
-    if (data.action === 'updateOpacity') {
-        syncState({ opacity: data.opacity });
-        renderOpacity();
-        applyWatermarkStyles();
-        return;
-    }
-
     if (data.action === 'syncState' && data.state) {
-        syncState(data.state);
-        renderAll();
+        renderState(data.state);
     }
 }
 
-function cacheElements() {
-    ui.overlay = document.getElementById('hud-overlay');
-    ui.hud = document.querySelector('.hud-container');
-    ui.watermark = document.getElementById('watermark');
-    ui.watermarkImage = document.getElementById('watermark-image');
-    ui.opacitySlider = document.getElementById('opacity-slider');
-    ui.opacityValue = document.getElementById('opacity-value');
-    ui.statusBadge = document.getElementById('visibility-status');
-    ui.positionDisplay = document.getElementById('position-display');
-    ui.posXInput = document.getElementById('pos-x-input');
-    ui.posYInput = document.getElementById('pos-y-input');
-    ui.toggleBtn = document.getElementById('toggle-btn');
-    ui.localToggleBtn = document.getElementById('local-toggle-btn');
+function setupHandlers() {
+    ui.toggleButton.addEventListener('click', () => {
+        const nextEnabled = !state.enabled;
+        syncState({ enabled: nextEnabled });
+        renderDashboard();
+        postNUI('hud:toggle');
+    });
+
+    ui.opacitySlider.addEventListener('input', () => {
+        const nextOpacity = clamp((Number.parseInt(ui.opacitySlider.value, 10) || 0) / 100, 0, 1);
+        syncState({ opacity: nextOpacity });
+        renderDashboard();
+    });
+
+    ui.opacitySlider.addEventListener('change', () => {
+        postNUI('hud:setOpacity', { opacity: state.opacity });
+    });
+
+    ui.layoutApplyButton.addEventListener('click', submitLayout);
+
+    ui.syncButton.addEventListener('click', () => {
+        postNUI('hud:syncState');
+    });
+
+    ui.refreshButton.addEventListener('click', () => {
+        postNUI('hud:refresh');
+    });
+
+    ui.resetButton.addEventListener('click', () => {
+        postNUI('hud:resetDefaults');
+        setTimeout(() => postNUI('hud:syncState'), 150);
+    });
+
+    ui.closeButton.addEventListener('click', () => {
+        postNUI('hud:close');
+    });
+
+    ui.footerCloseButton.addEventListener('click', () => {
+        postNUI('hud:close');
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && state.hudOpen) {
+            postNUI('hud:close');
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     cacheElements();
-    setupTabHandlers();
-    setupDragHandlers();
-    setupControlHandlers();
-    renderAll();
-    window.addEventListener('message', handleNuiMessage);
+    setupHandlers();
+    renderState();
+    window.addEventListener('message', handleMessage);
 });

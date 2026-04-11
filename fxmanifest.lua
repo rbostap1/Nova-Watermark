@@ -2,8 +2,8 @@ fx_version 'cerulean'
 game 'gta5'
 
 author 'Ryan Bostaph'
-description 'A configurable watermark script for FiveM'
-version '1.0.0'
+description 'Server-authoritative watermark control for FiveM'
+version '1.1.0'
 
 lua54 'yes'
 
@@ -13,7 +13,6 @@ server_scripts {
 }
 
 client_scripts {
-    'config.lua',
     'client.lua'
 }
 
