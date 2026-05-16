@@ -1,387 +1,276 @@
-console.log('[Watermark] Control Center loaded');
+const RESOURCE_NAME = typeof GetParentResourceName === 'function' ? GetParentResourceName() : 'Watermark';
 
-let currentOffsetX = 20;
-let currentOffsetY = 20;
-let watermarkWidth = 150;
-let watermarkHeight = 150;
-let isDraggingHUD = false;
-let isDraggingWatermark = false;
-let dragStartX = 0;
-let dragStartY = 0;
-let elementStartX = 0;
-let elementStartY = 0;
-
-let hudState = {
-    enabled: true,
-    opacity: 0.8,
-    offsetX: 20,
-    offsetY: 20,
-    localHidden: false
+const ui = {
+    overlay: null,
+    watermark: null,
+    watermarkImage: null,
+    visibilityStatus: null,
+    visibilityChip: null,
+    stateValue: null,
+    opacityValue: null,
+    opacityReadout: null,
+    canvasValue: null,
+    opacitySlider: null,
+    posXInput: null,
+    posYInput: null,
+    widthInput: null,
+    heightInput: null,
+    toggleButton: null,
+    layoutApplyButton: null,
+    syncButton: null,
+    refreshButton: null,
+    resetButton: null,
+    closeButton: null,
+    footerCloseButton: null
 };
 
-window.addEventListener('message', function(event) {
-    const data = event.data;
-    console.log('[Watermark] Received action:', data.action);
+const state = {
+    enabled: true,
+    opacity: 0.5,
+    offsetX: 28,
+    offsetY: 20,
+    width: 150,
+    height: 150,
+    image: 'images/placeholder.jpg',
+    hudOpen: false
+};
 
-    if (data.action === 'showWatermark') {
-        handleShowWatermark(data);
-    } else if (data.action === 'hideWatermark') {
-        handleHideWatermark();
-    } else if (data.action === 'openHUD') {
-        handleOpenHUD(data);
-    } else if (data.action === 'closeHUD') {
-        handleCloseHUD();
-    } else if (data.action === 'updateOpacity') {
-        handleUpdateOpacity(data);
-    } else if (data.action === 'syncState') {
-        handleSyncState(data);
-    }
-});
-
-function handleShowWatermark(data) {
-    const watermark = document.getElementById('watermark');
-    const watermarkImage = document.getElementById('watermark-image');
-
-    currentOffsetX = data.offsetX;
-    currentOffsetY = data.offsetY;
-    watermarkWidth = data.width;
-    watermarkHeight = data.height;
-
-    const imagePath = `nui://Watermark/${data.image}`;
-    
-    watermarkImage.src = imagePath;
-    watermarkImage.style.width = data.width + 'px';
-    watermarkImage.style.height = data.height + 'px';
-    watermarkImage.style.opacity = data.opacity;
-
-    watermark.style.right = data.offsetX + 'px';
-    watermark.style.top = data.offsetY + 'px';
-    watermark.classList.add('visible');
-}
-
-function handleHideWatermark() {
-    const watermark = document.getElementById('watermark');
-    watermark.classList.remove('visible');
-    console.log('[Watermark] Watermark hidden');
-}
-
-function handleOpenHUD(data) {
-    const state = data.state || { enabled: true, opacity: 0.8 };
-    const overlay = document.getElementById('hud-overlay');
-    const watermark = document.getElementById('watermark');
-
-    overlay.classList.remove('hidden');
-    overlay.classList.add('visible');
-    watermark.classList.add('draggable');
-
-    applyHudState(state);
-    updateStatusDisplay();
-}
-
-function handleCloseHUD() {
-    const overlay = document.getElementById('hud-overlay');
-    const watermark = document.getElementById('watermark');
-
-    overlay.classList.add('hidden');
-    overlay.classList.remove('visible');
-    watermark.classList.remove('draggable');
-    console.log('[Watermark] HUD closed successfully');
-}
-
-function handleUpdateOpacity(data) {
-    const opacitySlider = document.getElementById('opacity-slider');
-    const watermarkImage = document.getElementById('watermark-image');
-    
-    watermarkImage.style.opacity = data.opacity;
-    opacitySlider.value = Math.round(data.opacity * 100);
-    updateOpacityDisplay();
-}
-
-function handleSyncState(data) {
-    if (data.state && typeof data.state === 'object') {
-        applyHudState(data.state);
-        // Update watermark position and dimensions on screen after state sync
-        const watermark = document.getElementById('watermark');
-        const watermarkImage = document.getElementById('watermark-image');
-        if (watermark && data.state.offsetX !== undefined && data.state.offsetY !== undefined) {
-            watermark.style.right = data.state.offsetX + 'px';
-            watermark.style.top = data.state.offsetY + 'px';
-        }
-        if (watermarkImage && data.state.width !== undefined && data.state.height !== undefined) {
-            watermarkImage.style.width = data.state.width + 'px';
-            watermarkImage.style.height = data.state.height + 'px';
-        }
-        if (watermarkImage && data.state.opacity !== undefined) {
-            watermarkImage.style.opacity = data.state.opacity;
-        }
-    }
-}
-
-function applyHudState(state) {
-    hudState.enabled = typeof state.enabled === 'boolean' ? state.enabled : hudState.enabled;
-    hudState.opacity = typeof state.opacity === 'number' ? state.opacity : hudState.opacity;
-    hudState.offsetX = typeof state.offsetX === 'number' ? state.offsetX : hudState.offsetX;
-    hudState.offsetY = typeof state.offsetY === 'number' ? state.offsetY : hudState.offsetY;
-    hudState.localHidden = typeof state.localHidden === 'boolean' ? state.localHidden : hudState.localHidden;
-
-    currentOffsetX = hudState.offsetX;
-    currentOffsetY = hudState.offsetY;
-
-    // Update watermark dimensions if provided
-    if (typeof state.width === 'number') {
-        watermarkWidth = state.width;
-    }
-    if (typeof state.height === 'number') {
-        watermarkHeight = state.height;
-    }
-
-    const opacitySlider = document.getElementById('opacity-slider');
-    if (opacitySlider) {
-        opacitySlider.value = Math.round(hudState.opacity * 100);
-    }
-
-    updateOpacityDisplay();
-    updatePositionDisplay();
-    updateToggleButtons();
-}
-
-function updateOpacityDisplay() {
-    const value = Math.round((hudState.opacity || 0.8) * 100);
-    const opacityValue = document.getElementById('opacity-value');
-    if (opacityValue) {
-        opacityValue.textContent = value + '%';
-    }
-}
-
-function updatePositionDisplay() {
-    const positionDisplay = document.getElementById('position-display');
-    const posXInput = document.getElementById('pos-x-input');
-    const posYInput = document.getElementById('pos-y-input');
-
-    const x = typeof hudState.offsetX === 'number' ? hudState.offsetX : 0;
-    const y = typeof hudState.offsetY === 'number' ? hudState.offsetY : 0;
-
-    if (positionDisplay) {
-        positionDisplay.textContent = `X: ${Math.round(x)}, Y: ${Math.round(y)}`;
-    }
-    if (posXInput) posXInput.value = Math.round(x);
-    if (posYInput) posYInput.value = Math.round(y);
-}
-
-function updateToggleButtons() {
-    const toggleBtn = document.getElementById('toggle-btn');
-    const localToggleBtn = document.getElementById('local-toggle-btn');
-
-    if (toggleBtn) {
-        const icon = hudState.enabled ? '👁️' : '👁️‍🗨️';
-        const text = hudState.enabled ? 'Hide Watermark' : 'Show Watermark';
-        toggleBtn.innerHTML = `<span class="btn-icon">${icon}</span>${text}`;
-    }
-
-    if (localToggleBtn) {
-        const text = hudState.localHidden ? 'Show Locally' : 'Hide Locally';
-        localToggleBtn.textContent = text;
-    }
-}
-
-function updateStatusDisplay() {
-    const badge = document.getElementById('visibility-status');
-    if (badge) {
-        badge.textContent = hudState.enabled ? 'Visible' : 'Hidden';
-        badge.classList.toggle('hidden', !hudState.enabled);
-    }
-}
-
-function postNUI(action, payload) {
-    fetch('https://Watermark/' + action, {
+function postNUI(action, payload = {}) {
+    return fetch(`https://${RESOURCE_NAME}/${action}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-        body: JSON.stringify(payload || {})
-    }).catch(err => console.error('[Watermark] NUI call failed:', err));
+        body: JSON.stringify(payload)
+    }).catch(() => null);
 }
 
-function setupDragSystem() {
-    const hudCard = document.querySelector('.hud-container');
-    const hudHeader = document.querySelector('.hud-header');
-    const watermark = document.getElementById('watermark');
-
-    hudHeader.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.close-btn')) return;
-        
-        isDraggingHUD = true;
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
-        
-        const rect = hudCard.getBoundingClientRect();
-        elementStartX = rect.left;
-        elementStartY = rect.top;
-        
-        hudCard.style.position = 'absolute';
-        e.preventDefault();
-    });
-
-    watermark.addEventListener('mousedown', (e) => {
-        if (!watermark.classList.contains('draggable')) return;
-        
-        isDraggingWatermark = true;
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
-        
-        const rect = watermark.getBoundingClientRect();
-        elementStartX = window.innerWidth - rect.right;
-        elementStartY = rect.top;
-        
-        e.preventDefault();
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (isDraggingHUD) {
-            const deltaX = e.clientX - dragStartX;
-            const deltaY = e.clientY - dragStartY;
-            
-            hudCard.style.left = (elementStartX + deltaX) + 'px';
-            hudCard.style.top = (elementStartY + deltaY) + 'px';
-        }
-
-        if (isDraggingWatermark) {
-            const deltaX = e.clientX - dragStartX;
-            const deltaY = e.clientY - dragStartY;
-            
-            const newOffsetX = Math.max(0, elementStartX - deltaX);
-            const newOffsetY = Math.max(0, elementStartY + deltaY);
-            
-            watermark.style.right = newOffsetX + 'px';
-            watermark.style.top = newOffsetY + 'px';
-            
-            currentOffsetX = Math.round(newOffsetX);
-            currentOffsetY = Math.round(newOffsetY);
-            
-            updatePositionDisplay();
-            postNUI('hud:updatePosition', { offsetX: currentOffsetX, offsetY: currentOffsetY });
-        }
-    });
-
-    document.addEventListener('mouseup', () => {
-        isDraggingHUD = false;
-        isDraggingWatermark = false;
-    });
+function clamp(value, minimum, maximum) {
+    return Math.min(maximum, Math.max(minimum, value));
 }
 
-function setupTabs() {
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
+function syncState(nextState = {}) {
+    if (typeof nextState.enabled === 'boolean') {
+        state.enabled = nextState.enabled;
+    }
 
-    tabButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tabName = btn.dataset.tab;
+    if (typeof nextState.opacity === 'number') {
+        state.opacity = clamp(nextState.opacity, 0, 1);
+    }
 
-            // Deactivate all tabs
-            tabButtons.forEach(b => b.classList.remove('active'));
-            tabContents.forEach(c => c.classList.remove('active'));
+    if (typeof nextState.offsetX === 'number') {
+        state.offsetX = clamp(Math.round(nextState.offsetX), 0, 10000);
+    }
 
-            // Activate selected tab
-            btn.classList.add('active');
-            document.getElementById(tabName + '-tab').classList.add('active');
-        });
+    if (typeof nextState.offsetY === 'number') {
+        state.offsetY = clamp(Math.round(nextState.offsetY), 0, 10000);
+    }
+
+    if (typeof nextState.width === 'number') {
+        state.width = clamp(Math.round(nextState.width), 20, 2000);
+    }
+
+    if (typeof nextState.height === 'number') {
+        state.height = clamp(Math.round(nextState.height), 20, 2000);
+    }
+
+    if (typeof nextState.image === 'string' && nextState.image !== '') {
+        state.image = nextState.image;
+    }
+}
+
+function cacheElements() {
+    ui.overlay = document.getElementById('hud-overlay');
+    ui.watermark = document.getElementById('watermark');
+    ui.watermarkImage = document.getElementById('watermark-image');
+    ui.visibilityStatus = document.getElementById('visibility-status');
+    ui.visibilityChip = document.getElementById('visibility-chip');
+    ui.stateValue = document.getElementById('state-value');
+    ui.opacityValue = document.getElementById('opacity-value');
+    ui.opacityReadout = document.getElementById('opacity-readout');
+    ui.canvasValue = document.getElementById('canvas-value');
+    ui.opacitySlider = document.getElementById('opacity-slider');
+    ui.posXInput = document.getElementById('pos-x-input');
+    ui.posYInput = document.getElementById('pos-y-input');
+    ui.widthInput = document.getElementById('width-input');
+    ui.heightInput = document.getElementById('height-input');
+    ui.toggleButton = document.getElementById('toggle-btn');
+    ui.layoutApplyButton = document.getElementById('layout-apply-btn');
+    ui.syncButton = document.getElementById('sync-btn');
+    ui.refreshButton = document.getElementById('refresh-btn');
+    ui.resetButton = document.getElementById('reset-btn');
+    ui.closeButton = document.getElementById('hud-close');
+    ui.footerCloseButton = document.getElementById('cancel-btn');
+}
+
+function applyWatermarkStyles() {
+    ui.watermark.style.right = `${state.offsetX}px`;
+    ui.watermark.style.top = `${state.offsetY}px`;
+    ui.watermarkImage.style.width = `${state.width}px`;
+    ui.watermarkImage.style.height = `${state.height}px`;
+    ui.watermarkImage.style.opacity = String(state.opacity);
+}
+
+function updateSliderVisual() {
+    const percent = Math.round(state.opacity * 100);
+    ui.opacitySlider.value = String(percent);
+    ui.opacitySlider.style.background = `linear-gradient(90deg, var(--accent-strong) 0%, var(--accent) ${percent}%, rgba(255,255,255,0.08) ${percent}%, rgba(255,255,255,0.08) 100%)`;
+}
+
+function renderDashboard() {
+    const percent = Math.round(state.opacity * 100);
+    const layoutSummary = `${state.offsetX}, ${state.offsetY} · ${state.width} x ${state.height}`;
+
+    ui.visibilityStatus.textContent = state.enabled ? 'Enabled' : 'Hidden';
+    ui.visibilityChip.textContent = state.enabled ? 'Visible' : 'Hidden';
+    ui.visibilityChip.classList.toggle('is-danger', !state.enabled);
+    ui.stateValue.textContent = state.enabled ? 'Enabled' : 'Hidden';
+    ui.opacityValue.textContent = `${percent}%`;
+    ui.opacityReadout.textContent = `${percent}%`;
+    ui.canvasValue.textContent = layoutSummary;
+    ui.toggleButton.textContent = state.enabled ? 'Hide Watermark' : 'Show Watermark';
+    ui.posXInput.value = String(state.offsetX);
+    ui.posYInput.value = String(state.offsetY);
+    ui.widthInput.value = String(state.width);
+    ui.heightInput.value = String(state.height);
+
+    updateSliderVisual();
+    applyWatermarkStyles();
+}
+
+function handleWatermarkVisibility() {
+    ui.watermark.classList.toggle('is-visible', state.enabled);
+    ui.watermark.setAttribute('aria-hidden', state.enabled ? 'false' : 'true');
+}
+
+function renderState(nextState = {}) {
+    syncState(nextState);
+    handleWatermarkVisibility();
+    renderDashboard();
+
+    if (state.hudOpen) {
+        ui.overlay.classList.remove('hidden');
+        ui.overlay.classList.add('visible');
+    }
+}
+
+function openHud(newState = {}) {
+    state.hudOpen = true;
+    syncState(newState);
+    ui.overlay.classList.remove('hidden');
+    ui.overlay.classList.add('visible');
+    renderDashboard();
+}
+
+function closeHud() {
+    state.hudOpen = false;
+    ui.overlay.classList.add('hidden');
+    ui.overlay.classList.remove('visible');
+}
+
+function parseInputValue(element, minimum, maximum) {
+    const parsed = Number.parseInt(element.value, 10);
+    return clamp(Number.isNaN(parsed) ? minimum : parsed, minimum, maximum);
+}
+
+function submitLayout() {
+    const payload = {
+        offsetX: parseInputValue(ui.posXInput, 0, 10000),
+        offsetY: parseInputValue(ui.posYInput, 0, 10000),
+        width: parseInputValue(ui.widthInput, 20, 2000),
+        height: parseInputValue(ui.heightInput, 20, 2000)
+    };
+
+    syncState(payload);
+    renderDashboard();
+    postNUI('hud:updateLayout', payload);
+}
+
+function handleMessage(event) {
+    const data = event.data || {};
+
+    if (data.action === 'showWatermark') {
+        syncState(data.state || {});
+
+        if (state.image) {
+            ui.watermarkImage.src = `nui://${RESOURCE_NAME}/${state.image}`;
+        }
+
+        handleWatermarkVisibility();
+        renderDashboard();
+        return;
+    }
+
+    if (data.action === 'hideWatermark') {
+        ui.watermark.classList.remove('is-visible');
+        ui.watermark.setAttribute('aria-hidden', 'true');
+        return;
+    }
+
+    if (data.action === 'openHUD') {
+        openHud(data.state || {});
+        return;
+    }
+
+    if (data.action === 'closeHUD') {
+        closeHud();
+        return;
+    }
+
+    if (data.action === 'syncState' && data.state) {
+        renderState(data.state);
+    }
+}
+
+function setupHandlers() {
+    ui.toggleButton.addEventListener('click', () => {
+        const nextEnabled = !state.enabled;
+        syncState({ enabled: nextEnabled });
+        renderDashboard();
+        postNUI('hud:toggle');
+    });
+
+    ui.opacitySlider.addEventListener('input', () => {
+        const nextOpacity = clamp((Number.parseInt(ui.opacitySlider.value, 10) || 0) / 100, 0, 1);
+        syncState({ opacity: nextOpacity });
+        renderDashboard();
+    });
+
+    ui.opacitySlider.addEventListener('change', () => {
+        postNUI('hud:setOpacity', { opacity: state.opacity });
+    });
+
+    ui.layoutApplyButton.addEventListener('click', submitLayout);
+
+    ui.syncButton.addEventListener('click', () => {
+        postNUI('hud:syncState');
+    });
+
+    ui.refreshButton.addEventListener('click', () => {
+        postNUI('hud:refresh');
+    });
+
+    ui.resetButton.addEventListener('click', () => {
+        postNUI('hud:resetDefaults');
+        setTimeout(() => postNUI('hud:syncState'), 150);
+    });
+
+    ui.closeButton.addEventListener('click', () => {
+        postNUI('hud:close');
+    });
+
+    ui.footerCloseButton.addEventListener('click', () => {
+        postNUI('hud:close');
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && state.hudOpen) {
+            postNUI('hud:close');
+        }
     });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('[Watermark] Initializing controls');
-
-    // Setup systems
-    setupDragSystem();
-    setupTabs();
-
-    const toggleBtn = document.getElementById('toggle-btn');
-    const localToggleBtn = document.getElementById('local-toggle-btn');
-    const refreshBtn = document.getElementById('refresh-btn');
-    const syncBtn = document.getElementById('sync-btn');
-    const closeBtn = document.getElementById('hud-close');
-    const resetBtn = document.getElementById('reset-btn');
-    const cancelBtn = document.getElementById('cancel-btn');
-    const posXInput = document.getElementById('pos-x-input');
-    const posYInput = document.getElementById('pos-y-input');
-    const posApplyBtn = document.getElementById('pos-apply-btn');
-    const opacitySlider = document.getElementById('opacity-slider');
-
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-            console.log('[Watermark] Toggling server-wide visibility');
-            postNUI('hud:toggle', {});
-        });
-    }
-
-    if (localToggleBtn) {
-        localToggleBtn.addEventListener('click', () => {
-            console.log('[Watermark] Toggling local visibility');
-            postNUI('hud:toggleLocal', {});
-        });
-    }
-
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', () => {
-            console.log('[Watermark] Refreshing display');
-            postNUI('hud:refresh', {});
-        });
-    }
-
-    if (syncBtn) {
-        syncBtn.addEventListener('click', () => {
-            console.log('[Watermark] Syncing state from server');
-            postNUI('hud:syncState', {});
-        });
-    }
-
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            console.log('[Watermark] Closing HUD');
-            postNUI('hud:close', {});
-        });
-    }
-
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', () => {
-            console.log('[Watermark] Canceling - closing HUD');
-            postNUI('hud:close', {});
-        });
-    }
-
-    if (resetBtn) {
-        resetBtn.addEventListener('click', () => {
-            console.log('[Watermark] Resetting to defaults');
-            postNUI('hud:resetDefaults', {});
-            // Request state sync after reset to ensure UI updates
-            setTimeout(() => {
-                console.log('[Watermark] Requesting state sync after reset');
-                postNUI('hud:syncState', {});
-            }, 500);
-        });
-    }
-
-    if (posApplyBtn) {
-        posApplyBtn.addEventListener('click', () => {
-            const xVal = parseInt(posXInput.value, 10);
-            const yVal = parseInt(posYInput.value, 10);
-            
-            if (Number.isFinite(xVal) && Number.isFinite(yVal)) {
-                currentOffsetX = Math.max(0, Math.min(10000, xVal));
-                currentOffsetY = Math.max(0, Math.min(10000, yVal));
-                console.log('[Watermark] Applying position:', currentOffsetX, currentOffsetY);
-                postNUI('hud:updatePosition', { offsetX: currentOffsetX, offsetY: currentOffsetY });
-            }
-        });
-    }
-
-    if (opacitySlider) {
-        opacitySlider.addEventListener('input', (e) => {
-            const value = parseInt(e.target.value, 10);
-            const normalized = Math.max(0, Math.min(100, value)) / 100;
-            console.log('[Watermark] Setting opacity:', normalized);
-            postNUI('hud:setOpacity', { opacity: normalized });
-            updateOpacityDisplay();
-        });
-    }
-
-    console.log('[Watermark] Controls initialized');
+    cacheElements();
+    setupHandlers();
+    renderState();
+    window.addEventListener('message', handleMessage);
 });

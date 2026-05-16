@@ -1,46 +1,45 @@
 # Watermark (FiveM Resource)
 
-Configurable image watermark with an in-game HUD. Server admins can toggle visibility, adjust opacity, and reposition the watermark for all players. Optional Discord role gating for `/watermark` access via Badger_Discord_API.
-
-**Version:** 1.0.0 (see fxmanifest.lua)
+Server-authoritative watermark control for FiveM. The server owns visibility, opacity, position, size, and persistence; the client only renders the watermark and relays HUD actions.
 
 ## Features
 
-- Image watermark in top-right corner
-- HUD Control Center (`/watermark`) with tabs: Visibility, Position, Advanced
-- Server-wide visibility toggle and local-only hide
-- Opacity control (0.0–1.0) with live preview
-- Position control via drag or X/Y input
-- Configurable size (`Width`, `Height`) and image path
-- Optional Discord role-based access to HUD
+- Global watermark image in the top-right corner
+- Clean admin HUD at `/watermark`
+- Server-owned visibility toggle
+- Live opacity control
+- Server-validated position and size updates
+- Persisted state stored in resource KVP, not in `config.lua`
+- Optional Discord role gate via `Badger_Discord_API`
 
 ## Requirements
 
 - FiveM server
-- Optional: Badger_Discord_API (for Discord role checks)
+- Optional: `Badger_Discord_API` for Discord role checks
 
 ## Installation
 
-1. Copy the `Watermark` folder into your server `resources`.
-2. Add to `server.cfg`:
+1. Copy the `Watermark` folder into your server `resources` directory.
+2. Add the resource to `server.cfg`:
 
-```
+```cfg
 ensure Watermark
 ```
 
-3. Place your watermark image under `images/` and set `Config.Image` in `config.lua`.
-4. (Optional) Add allowed Discord role IDs in `config.lua` and ensure `Badger_Discord_API` is running.
+3. Put your watermark image in `images/` and update `Config.Image` in `config.lua`.
+4. Optionally add Discord role IDs in `config.lua` and ensure `Badger_Discord_API` is running.
 
 ## Usage
 
 - Run `/watermark` to open the HUD.
-- Visibility tab: toggle server-wide visibility, toggle local-only hide, adjust opacity.
-- Position tab: drag the watermark or apply exact X/Y values.
-- Advanced tab: reset to defaults, refresh display, sync from server.
+- Use the Visibility card to show or hide the watermark for everyone.
+- Use the Appearance card to adjust opacity.
+- Use the Layout card to update X/Y offsets and width/height in one server-synced action.
+- Use Maintenance to refresh the state or restore defaults.
 
 ## Configuration
 
-Edit `config.lua`:
+Edit `config.lua` for the default state:
 
 ```lua
 Config = {
@@ -58,17 +57,12 @@ Config = {
 ```
 
 Notes:
-- Leave `DiscordRoleIds` empty to allow all players to open the HUD.
-- NUI uses the resource name (`nui://Watermark/...`). If you rename the folder, update references accordingly.
-
-## Branches
-
-- Production: stable releases and recommended for deployment.
-- Development: latest changes under active development.
+- Leave `DiscordRoleIds` empty to allow everyone to open the HUD.
+- Runtime edits are persisted in the resource KVP store, so the source config stays untouched.
 
 ## File Structure
 
-```
+```text
 Watermark/
 ├── fxmanifest.lua
 ├── config.lua
@@ -76,7 +70,6 @@ Watermark/
 ├── server.lua
 ├── README.md
 ├── instructions.md
-├── BEFORE_AFTER.md
 ├── html/
 │   ├── index.html
 │   ├── script.js
@@ -86,13 +79,13 @@ Watermark/
 
 ## Troubleshooting
 
-- HUD doesn’t open: ensure `Badger_Discord_API` is installed and `DiscordRoleIds` are set correctly (if gating access). Check server console logs.
-- Image not showing: verify `Config.Image` points to an existing file under `images/`.
-- Position/opacity not updating: open HUD and try Refresh or Sync; confirm the resource is ensured in `server.cfg`.
+- HUD does not open: verify Discord role gating is configured correctly, or leave `DiscordRoleIds` empty for open access.
+- Image missing: confirm `Config.Image` points to a valid file under `images/`.
+- Changes are not sticking: ensure the resource has write access to its KVP store and restart the resource once after updating config defaults.
 
 ## License
 
-See LICENSE for terms.
+See `LICENSE`.
 
 ## Credits
 
