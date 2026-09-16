@@ -1,16 +1,6 @@
 local resourceName = GetCurrentResourceName()
 local stateKey = 'watermark:state'
 
-local defaults = {
-    enabled = Config.Enabled ~= false,
-    opacity = math.max(0.0, math.min(1.0, tonumber(Config.Opacity) or 0.5)),
-    offsetX = math.floor(tonumber(Config.OffsetX) or 28),
-    offsetY = math.floor(tonumber(Config.OffsetY) or 20),
-    width = math.floor(tonumber(Config.Width) or 150),
-    height = math.floor(tonumber(Config.Height) or 150),
-    image = Config.Image or 'images/placeholder.jpg'
-}
-
 local state = {}
 
 local function log(level, message)
@@ -43,6 +33,16 @@ local function clampNumber(value, minimum, maximum, integer)
 
     return numeric
 end
+
+local defaults = {
+    enabled = Config.Enabled ~= false,
+    opacity = clampNumber(Config.Opacity, 0.0, 1.0, false) or 0.5,
+    offsetX = clampNumber(Config.OffsetX, 0, 10000, true) or 28,
+    offsetY = clampNumber(Config.OffsetY, 0, 10000, true) or 20,
+    width = clampNumber(Config.Width, 20, 2000, true) or 150,
+    height = clampNumber(Config.Height, 20, 2000, true) or 150,
+    image = type(Config.Image) == 'string' and Config.Image ~= '' and Config.Image or 'images/placeholder.jpg'
+}
 
 local function copyState(source)
     source = type(source) == 'table' and source or {}
@@ -136,7 +136,7 @@ local function isAuthorized(sourceId)
         return true
     end
 
-    local allowedRoles = Config.DiscordRoleIds or {}
+    local allowedRoles = type(Config.DiscordRoleIds) == 'table' and Config.DiscordRoleIds or {}
     if #allowedRoles == 0 then
         return true
     end

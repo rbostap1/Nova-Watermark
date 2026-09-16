@@ -109,6 +109,15 @@ function applyWatermarkStyles() {
     ui.watermarkImage.style.opacity = String(state.opacity);
 }
 
+function applyWatermarkImage() {
+    const imageUrl = `nui://${RESOURCE_NAME}/${state.image}`;
+
+    if (ui.watermarkImage.dataset.source !== imageUrl) {
+        ui.watermarkImage.src = imageUrl;
+        ui.watermarkImage.dataset.source = imageUrl;
+    }
+}
+
 function updateSliderVisual() {
     const percent = Math.round(state.opacity * 100);
     ui.opacitySlider.value = String(percent);
@@ -133,6 +142,7 @@ function renderDashboard() {
     ui.heightInput.value = String(state.height);
 
     updateSliderVisual();
+    applyWatermarkImage();
     applyWatermarkStyles();
 }
 
@@ -189,10 +199,6 @@ function handleMessage(event) {
 
     if (data.action === 'showWatermark') {
         syncState(data.state || {});
-
-        if (state.image) {
-            ui.watermarkImage.src = `nui://${RESOURCE_NAME}/${state.image}`;
-        }
 
         handleWatermarkVisibility();
         renderDashboard();
